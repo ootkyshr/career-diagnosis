@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>キャリア診断ツール | 株式会社コトラ</title>
+    
+    <!-- ==========================================
+         PWA設定 (manifest.json, sw.js が必要です)
+         ========================================== -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- iOS (Safari) 用のPWA設定 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="キャリア診断">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
+    <!-- テーマカラー -->
+    <meta name="theme-color" content="#667eea">
+
+    <style>
+        /* 基本スタイル */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+            line-height: 1.6; color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh; padding: 20px;
+        }
+        .container { max-width: 900px; margin: 0 auto; position: relative; }
+        
+        /* カードデザイン */
+        .card {
+            background: #fff; border-radius: 12px; padding: 40px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin-bottom: 30px;
+            position: relative; overflow: hidden;
+        }
+        
+        /* ヘッダー・タイトル */
+        header { background: #fff; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 30px; border-radius: 8px; text-align: center; display: flex; justify-content: center; align-items: center; }
+        header img { height: 40px; max-width: 100%; object-fit: contain; }
+        h2 { color: #003d7a; font-size: 26px; margin-bottom: 20px; text-align: center; }
+        
+        /* ボタン */
+        .btn {
+            display: block; width: 100%; max-width: 400px; margin: 30px auto; padding: 18px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff; text-align: center; text-decoration: none; border-radius: 50px;
+            font-size: 18px; font-weight: bold; border: none; cursor: pointer;
+            transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6); }
+        .btn:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+        
+        /* リピーター用セクション */
+        .welcome-back-section {
+            background: #f0f7ff;
+            border: 2px solid #667eea;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+            display: none; /* 初期状態は非表示 */
+        }
+        .welcome-title { font-size: 20px; color: #003d7a; font-weight: bold; margin-bottom: 10px; }
+        .last-result-info { font-size: 16px; color: #555; margin-bottom: 20px; }
+        .last-result-type { font-size: 24px; font-weight: bold; color: #d35400; display: block; margin: 10px 0; }
+        
+        .btn-secondary {
+            background: #fff; color: #666; border: 2px solid #ccc;
+            box-shadow: none; margin-top: 15px;
+        }
+        .btn-secondary:hover {
+            background: #f8f9fa; color: #333; border-color: #999;
+            transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* ページ切り替え */
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 質問・選択肢 */
+        .progress-container { margin-bottom: 30px; }
+        .progress-bar { width: 100%; height: 8px; background: #e0e0e0; border-radius: 10px; overflow: hidden; margin-bottom: 10px; }
+        .progress-fill { height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); width: 0%; transition: width 0.5s ease; }
+        .question-title { font-size: 20px; font-weight: 600; margin-bottom: 20px; }
+        .question-note { font-size: 14px; color: #667eea; margin-bottom: 15px; font-weight: 500; }
+        
+        .option { 
+            display: flex; align-items: center; padding: 15px 20px; 
+            background: #f8f9fa; border: 2px solid #e0e0e0; border-radius: 8px; 
+            cursor: pointer; margin-bottom: 12px; transition: all 0.2s;
+            user-select: none;
+        }
+        .option:hover { background: #e8f0fe; border-color: #667eea; }
+        .option.selected { background: #e8f0fe; border-color: #667eea; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2); }
+        .option input { margin-right: 12px; transform: scale(1.2); cursor: pointer; }
+        .option span { cursor: pointer; flex: 1; }
+        
+        .navigation-buttons { display: flex; gap: 15px; justify-content: center; margin-top: 30px; }
+        .btn-nav { 
+            padding: 12px 30px; background: #fff; color: #667eea; 
+            border: 2px solid #667eea; border-radius: 50px; font-weight: bold; 
+            cursor: pointer; transition: 0.3s; font-size: 16px;
+        }
+        .btn-nav:hover:not(:disabled) { background: #667eea; color: #fff; }
+        .btn-nav:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* 結果画面 */
+        .result-preview { 
+            text-align: center; padding: 30px; 
+            background: linear-gradient(135deg, #fff8f0 0%, #ffe8e0 100%); 
+            border-radius: 12px; margin: 20px 0; 
+            border: 2px solid #ffeeba; 
+        }
+        .result-type { font-size: 32px; font-weight: bold; color: #d35400; margin: 20px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
+        
+        /* 登録リンクボタン */
+        .register-section {
+            text-align: center;
+            padding: 40px 30px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            margin: 30px 0;
+            border: 2px solid #dee2e6;
+        }
+        .register-microcopy { font-size: 14px; color: #666; margin-bottom: 15px; font-weight: 500; }
+        .register-btn {
+            display: inline-block; padding: 18px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; text-decoration: none; border-radius: 50px;
+            font-size: 18px; font-weight: bold;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+        }
+        .register-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6); }
+
+        /* 詳細資料スタイル */
+        .detail-report { 
+            display: none; margin-top: 40px; padding: 40px; 
+            background: #f8f9fa; border-radius: 12px; border: 2px solid #e0e0e0;
+        }
+        .detail-report h2 { color: #003d7a; font-size: 28px; margin-bottom: 10px; text-align: center; }
+        .detail-subtitle { text-align: center; font-size: 16px; color: #666; font-weight: 500; margin-bottom: 30px; }
+        .report-section { 
+            background: white; padding: 25px; margin-bottom: 20px; 
+            border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
+        }
+        .report-section h3 { 
+            color: #003d7a; font-size: 20px; margin-bottom: 15px; 
+            padding-bottom: 10px; border-bottom: 2px solid #e0e0e0; 
+        }
+        .report-section p { line-height: 1.8; color: #444; margin-bottom: 15px; }
+        .report-section ul { margin-left: 0; padding-left: 0; line-height: 1.8; list-style: none; }
+        
+        /* ToDoリスト用スタイル */
+        .todo-item {
+            display: flex; align-items: flex-start; padding: 12px;
+            margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px;
+            background-color: #fff; cursor: pointer; transition: all 0.2s ease;
+        }
+        .todo-item:hover { border-color: #667eea; background-color: #f8f9fa; }
+        .todo-item.completed { background-color: #e8f5e9; border-color: #27ae60; }
+        .todo-checkbox { margin-top: 5px; margin-right: 12px; transform: scale(1.3); cursor: pointer; }
+        .todo-label { flex: 1; cursor: pointer; color: #444; }
+        
+        .todo-progress-area { margin-bottom: 20px; padding: 15px; background: #f0f4f8; border-radius: 8px; }
+        .todo-progress-text { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 5px; color: #003d7a; }
+        .todo-progress-bar-bg { width: 100%; height: 10px; background: #ddd; border-radius: 5px; overflow: hidden; }
+        .todo-progress-bar-fill { height: 100%; background: #27ae60; width: 0%; transition: width 0.4s ease; }
+        
+        /* 通常のリスト（ロードマップ用） */
+        .roadmap-list li { margin-bottom: 10px; color: #444; padding-left: 20px; position: relative; }
+        .roadmap-list li::before { content: "📍"; position: absolute; left: 0; top: 0; }
+        
+        .report-section strong { color: #003d7a; font-weight: 600; }
+        footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+        
+        @media (max-width: 600px) {
+            .card { padding: 25px; }
+            h2 { font-size: 22px; }
+            .btn { font-size: 16px; padding: 15px 30px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="https://www.genspark.ai/api/files/s/iqlryruD" alt="KOTORA" style="height: 40px;">
+        </header>
+
+        <div id="page-start" class="page active">
+            <div class="card">
+                <h2>🎯 キャリア診断ツール</h2>
+                
+                <!-- リピーター向けセクション -->
+                <div id="welcomeSection" class="welcome-back-section">
+                    <p class="welcome-title">おかえりなさい</p>
+                    <div class="last-result-info">
+                        前回の診断結果（<span id="lastDate"></span>）
+                        <span class="last-result-type" id="lastResultType"></span>
+                    </div>
+                    <button class="btn" id="resumeBtn">前回の続きを見る（結果へ）</button>
+                    <button class="btn btn-secondary" id="restartBtn">新しく診断し直す</button>
+                </div>
+
+                <!-- 初回訪問 / 再診断向け -->
+                <div id="introSection">
+                    <div style="text-align: center; margin-bottom: 30px; color: #555;">
+                        <p>8つの質問であなたの強みと適性を分析します。</p>
+                        <p>市場価値を最大化するキャリア戦略をご提案します。</p>
+                    </div>
+                    <button class="btn" id="startBtn">診断を開始する</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-questions" class="page">
+            <div class="card">
+                <div class="progress-container">
+                    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+                    <div style="text-align: center; font-size: 14px; color: #666;" id="progressText">質問 1 / 8</div>
+                </div>
+                <div id="questionContainer"></div>
+                <div class="navigation-buttons">
+                    <button class="btn-nav" id="prevBtn" disabled>前へ</button>
+                    <button class="btn-nav" id="nextBtn">次へ</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-results" class="page">
+            <div class="card">
+                <div id="resultContent" class="result-content">
+                    <h2>✨ 診断結果</h2>
+                    <div class="result-preview">
+                        <p style="color: #666; font-weight: bold;">あなたのキャリアタイプは...</p>
+                        <div class="result-type" id="resultType">（診断中...）</div>
+                        <p id="resultDescription" style="line-height: 1.8; color: #444; margin-top: 15px;"></p>
+                    </div>
+                    
+                    <div class="register-section">
+                        <p class="register-microcopy">検討が進みやすくなります</p>
+                        <a href="https://www.kotora.jp/service/tenshoku_entry.php?utm_source=tool&utm_medium=tool&utm_campaign=note_carrierdiagnostictool" class="register-btn" target="_blank">無料で登録して、情報収集を始める</a>
+                    </div>
+                    
+                    <div id="detailReport" class="detail-report" style="display: block;">
+                        <h2 id="detailTitle"></h2>
+                        <p id="detailSubtitle" class="detail-subtitle"></p>
+                        
+                        <div class="report-section">
+                            <h3>📈 あなたの市場価値</h3>
+                            <p id="marketValue"></p>
+                        </div>
+                        
+                        <div class="report-section">
+                            <h3>🚀 ネクスト・アクション（達成チェックリスト）</h3>
+                            <p style="font-size:14px; color:#666; margin-bottom:10px;">
+                                完了した項目にチェックを入れてください。<br>進捗は自動で保存されます。
+                            </p>
+                            <div class="todo-progress-area">
+                                <div class="todo-progress-text">
+                                    <span>アクション達成率</span>
+                                    <span id="actionPercent">0%</span>
+                                </div>
+                                <div class="todo-progress-bar-bg">
+                                    <div id="actionBar" class="todo-progress-bar-fill"></div>
+                                </div>
+                            </div>
+                            <ul id="nextActions"></ul>
+                        </div>
+                        
+                        <div class="report-section">
+                            <h3>🗺 将来に向けてのキャリアロードマップ</h3>
+                            <ul id="roadmap" class="roadmap-list"></ul>
+                        </div>
+                        
+                        <div class="report-section">
+                            <h3>💡 コトラからのワンポイント</h3>
+                            <p id="onepoint"></p>
+                        </div>
+                    </div>
+                    
+                    <div class="register-section">
+                        <p class="register-microcopy">検討が進みやすくなります</p>
+                        <a href="https://www.kotora.jp/service/tenshoku_entry.php?utm_source=tool&utm_medium=tool&utm_campaign=note_carrierdiagnostictool" class="register-btn" target="_blank">無料で登録して、情報収集を始める</a>
+                    </div>
+                    
+                    <div style="margin-top: 30px; text-align: center;">
+                        <button class="btn-nav" id="retryBtn" style="padding: 12px 40px;">もう一度診断する</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2026 KOTORA Co., Ltd. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script>
+        // --- Service Workerの登録 (PWA化) ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful:', registration.scope);
+                    }, err => {
+                        console.log('ServiceWorker registration failed:', err);
+                    });
+            });
+        }
+
+        // --- 質問データ ---
+        const questions = [
+            { 
+                id: 1, 
+                text: "現在のあなたの職種に最も近いものは？", 
+                options: [
+                    { text: "金融", scores: { finance: 3, analytical: 1 } },
+                    { text: "不動産", scores: { realestate: 3, negotiation: 1 } },
+                    { text: "コンサルティング", scores: { consulting: 3, strategy: 2 } },
+                    { text: "IT / DXエンジニア", scores: { it: 3, technical: 2 } },
+                    { text: "製造業", scores: { manufacturing: 3, specialist: 1 } },
+                    { text: "経営幹部 管理系ビジネス", scores: { leadership: 3, management: 2 } },
+                    { text: "その他", scores: { versatility: 1 } }
+                ]
+            },
+            { 
+                id: 2, 
+                text: "あなたのキャリアで最も重視することは？", 
+                options: [
+                    { text: "専門性を深めること", scores: { specialist: 3, technical: 2 } },
+                    { text: "マネジメント・リーダーシップ", scores: { leadership: 3, management: 2 } },
+                    { text: "幅広い経験を積むこと", scores: { generalist: 3, versatility: 2 } },
+                    { text: "社会的インパクトを生み出すこと", scores: { impact: 3, strategy: 2 } }
+                ]
+            },
+            { 
+                id: 3, 
+                text: "仕事で最もやりがいを感じる瞬間は？", 
+                options: [
+                    { text: "複雑な課題を論理的に解決したとき", scores: { analytical: 3, problem_solving: 2 } },
+                    { text: "チームを率いて成果を出したとき", scores: { leadership: 3, teamwork: 2 } },
+                    { text: "新しい仕組みや戦略を創り出したとき", scores: { strategy: 3, innovation: 2 } },
+                    { text: "クライアントや顧客に喜ばれたとき", scores: { communication: 3, client_focus: 2 } }
+                ]
+            },
+            { 
+                id: 4, 
+                text: "あなたが最も得意とするスキルは？", 
+                options: [
+                    { text: "データ分析・定量分析", scores: { analytical: 3, technical: 2 } },
+                    { text: "戦略立案・企画", scores: { strategy: 3, planning: 2 } },
+                    { text: "対人折衝・交渉", scores: { communication: 3, negotiation: 2 } },
+                    { text: "プロジェクトマネジメント", scores: { management: 3, execution: 2 } }
+                ]
+            },
+            { 
+                id: 5, 
+                text: "理想的な働き方は？", 
+                options: [
+                    { text: "じっくり一つのテーマに取り組む", scores: { specialist: 2, focus: 2 } },
+                    { text: "複数のプロジェクトを同時進行", scores: { versatility: 2, multitasking: 2 } },
+                    { text: "チームで協力しながら進める", scores: { teamwork: 3, collaboration: 2 } },
+                    { text: "個人の裁量で自由に進める", scores: { autonomy: 3, independence: 2 } }
+                ]
+            },
+            { 
+                id: 6, 
+                text: "転職で最も実現したいことは？", 
+                options: [
+                    { text: "年収アップ", scores: { ambition: 2, finance: 1 } },
+                    { text: "キャリアアップ・昇進", scores: { leadership: 2, ambition: 3 } },
+                    { text: "新しいスキル・経験の獲得", scores: { growth: 3, learning: 2 } },
+                    { text: "ワークライフバランスの改善", scores: { balance: 3, wellbeing: 2 } }
+                ]
+            },
+            { 
+                id: 7, 
+                text: "興味のある企業タイプは？", 
+                type: "checkbox", 
+                options: [
+                    { text: "外資系企業", scores: { global: 2, versatility: 1 } },
+                    { text: "日系大手企業", scores: { corporate: 2, stability: 1 } },
+                    { text: "ベンチャー・スタートアップ", scores: { entrepreneurship: 2, innovation: 1 } },
+                    { text: "コンサルティングファーム", scores: { consulting: 2, strategy: 1 } },
+                    { text: "PEファンド・投資会社", scores: { finance: 2, analytical: 1 } },
+                    { text: "事業会社（経営企画・DX推進）", scores: { management: 2, it: 1 } }
+                ]
+            },
+            { 
+                id: 8, 
+                text: "5年後、あなたはどうなっていたいですか？", 
+                options: [
+                    { text: "その道のエキスパートとして認められている", scores: { specialist: 3, expertise: 3 } },
+                    { text: "マネージャー・経営層として活躍している", scores: { leadership: 3, management: 3 } },
+                    { text: "起業または独立している", scores: { entrepreneurship: 3, autonomy: 2 } },
+                    { text: "グローバルに活躍している", scores: { global: 3, versatility: 2 } }
+                ]
+            }
+        ];
+
+        // --- タイプ定義と説明文 ---
+        const TYPE_INFO = {
+            "戦略思考型リーダー": "戦略的思考力とリーダーシップを兼ね備えたタイプ。組織を率いて大きな成果を生み出すことが得意です。経営層やマネジメント職で真価を発揮できます。",
+            "金融スペシャリスト": "金融知識と分析力に優れたタイプ。高度な金融専門性が求められる分野で活躍できます。投資銀行、PEファンド、財務企画などが適職です。",
+            "コンサルティングプロフェッショナル": "戦略立案と問題解決に長けたタイプ。クライアントの経営課題を解決することに喜びを感じます。戦略コンサルやビジネスコンサルタントに最適です。",
+            "テクノロジー・DXリーダー": "技術力とイノベーション志向を持つタイプ。デジタル変革を推進し、事業成長に貢献できます。CTO、DX推進責任者、テックリードなどで活躍できます。",
+            "専門性追求型エキスパート": "特定領域の専門性を深めることに情熱を持つタイプ。その道のプロフェッショナルとして活躍します。専門職、スペシャリストポジションで強みを発揮できます。",
+            "クライアント志向型プロフェッショナル": "優れたコミュニケーション力と折衝力を持つタイプ。信頼関係を構築し最適な提案ができます。営業、アカウントマネジメント、カスタマーサクセスなどに向いています。",
+            "事業変革リーダー": "変革を推進する実行力を持つタイプ。新規事業やチャレンジャブルな環境で力を発揮します。スタートアップ、新規事業開発、事業再生などが適職です。",
+            "マルチタレント型ゼネラリスト": "幅広い知識とスキルを持ち、柔軟に対応できるタイプ。多様なプロジェクトで横断的に活躍します。事業企画、経営企画、プロジェクトマネージャーなどで強みを発揮できます。"
+        };
+
+        // --- 詳細資料データ ---
+        const detailReports = {
+            "戦略思考型リーダー": {
+                subtitle: "〜組織を勝利に導く、経営の羅針盤〜",
+                marketValue: "不確実性の高い現代において、ファクトに基づき論理的に進むべき道を示せる人材は希少です。特に、単なる分析屋ではなく「人を動かすリーダーシップ」を兼ね備えている点で、CxO（経営幹部）候補としての市場価値が非常に高い状態です。",
+                nextActions: [
+                    "<strong>[Lv.1] 「意思決定」の言語化</strong><br>チームに対して、結論だけでなく「なぜその判断に至ったか」の思考プロセスを共有する頻度を上げてください。",
+                    "<strong>[Lv.2] 非連続な成長の模索</strong><br>既存事業の延長線（改善）ではなく、全く新しい収益源やビジネスモデル（改革）を構想する時間を週に1時間は確保しましょう。",
+                    "<strong>[Lv.3] 反対意見の吸収</strong><br>自分の意見に反対しそうなメンバーと1対1で話し、懸念点を聞き出す時間を作ってください。"
+                ],
+                roadmap: ["事業責任者（Business Unit Head）", "CSO（最高戦略責任者）", "経営企画部長"],
+                onepoint: "面接では「戦略の美しさ」よりも「泥臭い実行フェーズで、抵抗勢力をどう説得したか」という人間的な調整力のエピソードが高く評価されます。"
+            },
+            "金融スペシャリスト": {
+                subtitle: "〜資本の流れを読み解き、企業価値を最大化する参謀〜",
+                marketValue: "数字という世界共通言語を操れるあなたは、どの業界でも重宝されます。特に、単なる管理会計や財務処理にとどまらず、「投資対効果（ROI）」や「ファイナンス戦略」視点を持っている場合、PEファンドやCFO候補として引く手あまたです。",
+                nextActions: [
+                    "<strong>[Lv.1] ビジネス理解の深化</strong><br>数字の裏側にある「現場のオペレーション」や「商流」を解像度高く理解するよう努めてください。",
+                    "<strong>[Lv.2] エクイティストーリーの構築</strong><br>自社やクライアント企業が「どうすれば株価（企業価値）が上がるか」を投資家目線で語る訓練をしましょう。",
+                    "<strong>[Lv.3] 分析レポート作成</strong><br>担当分野に関する分析レポートをA4・1枚で作成し、アウトプットする習慣をつけてください。"
+                ],
+                roadmap: ["CFO（最高財務責任者）", "PEファンド / ベンチャーキャピタリスト", "M&Aアドバイザリー"],
+                onepoint: "「守り（コンプライアンス・管理）」だけでなく、「攻め（資金調達・M&A・投資）」の経験を積める環境に身を置くことが、理想の年収アップを実現する鍵です。"
+            },
+            "コンサルティングプロフェッショナル": {
+                subtitle: "〜難問を解決し、クライアントに変革をもたらす知の巨人〜",
+                marketValue: "短期間で本質的な課題を特定し、解決策を提示する「プロブレム・ソルビングスキル」は、事業会社でも即戦力です。特にDXやサステナビリティなど、正解のないテーマにおいてあなたのスキルは輝きます。",
+                nextActions: [
+                    "<strong>[Lv.1] ロジックツリー分解</strong><br>今抱えている課題を1つ、ロジックツリーで分解し、構造化して考える癖をつけましょう。",
+                    "<strong>[Lv.2] 「実行」へのコミット</strong><br>絵に描いた餅（綺麗な資料）で終わらせず、現場が動けるレベルまで落とし込む「実行支援」のスキルを磨きましょう。",
+                    "<strong>[Lv.3] アカウントマネジメント力</strong><br>課題解決だけでなく、「あなたにまた頼みたい」と思わせる営業力・関係構築力を意識してください。"
+                ],
+                roadmap: ["コンサルティングファーム パートナー", "大手事業会社 経営企画室長", "PEファンド 投資先バリューアップ担当"],
+                onepoint: "事業会社への転職を目指す場合、「評論家」と見られないよう注意が必要です。「自ら手を動かし、泥をかぶった経験」を職務経歴書にどう盛り込むかが重要です。"
+            },
+            "テクノロジー・DXリーダー": {
+                subtitle: "〜技術とビジネスを融合させ、未来を実装する建築家〜",
+                marketValue: "「技術がわかる」人材は多いですが、「技術を使ってビジネス（利益）をどう生み出すか」を語れる人材は極めて不足しています。経営層とエンジニアの共通言語を持ち、翻訳できるあなたは、現代企業の最重要人物です。",
+                nextActions: [
+                    "<strong>[Lv.1] PL（損益）感覚の養成</strong><br>導入するツールや開発するシステムが、どれだけのコスト削減や売上増に繋がるかを、常に金額で試算する癖をつけましょう。",
+                    "<strong>[Lv.2] 翻訳力の向上</strong><br>技術的な課題（技術的負債など）を、非エンジニア向けに専門用語なしで説明する文章を書いてみましょう。",
+                    "<strong>[Lv.3] 組織変革（チェンジマネジメント）</strong><br>システム導入時の現場の反発をどう抑え、定着させるか。「人」のマネジメントスキルを磨いてください。"
+                ],
+                roadmap: ["CTO（最高技術責任者） / CDO（最高デジタル責任者）", "VPoE（Vice President of Engineering）", "DX推進本部長"],
+                onepoint: "ハイクラス求人では、特定の言語スキルよりも「技術選定の理由」や「エンジニア組織の採用・評価制度の構築経験」が問われます。"
+            },
+            "専門性追求型エキスパート": {
+                subtitle: "〜特定の領域を極め、代替不可能な価値を提供する職人〜",
+                marketValue: "「この分野なら〇〇さん」と言われる第一人者ポジションは、景気変動に強く、独立や顧問としての道も開けます。法務、知財、特定技術、リスク管理など、深さがそのまま参入障壁（防御力）になります。",
+                nextActions: [
+                    "<strong>[Lv.1] 最新情報のキャッチアップ</strong><br>自分の専門分野のキーワードで検索し、最新ニュースや論文を1つ読みましょう。",
+                    "<strong>[Lv.2] 社外発信とネットワーキング</strong><br>社内だけでなく、業界団体やセミナー登壇、執筆などを通じて「個人の名前」でブランドを作ってください。",
+                    "<strong>[Lv.3] 周辺領域への染み出し</strong><br>専門知識を、隣接するビジネス領域（例：法務ならビジネス開発）とどう絡めるか意識してみましょう。"
+                ],
+                roadmap: ["専門役員（CLO、CISOなど）", "特定領域の技術顧問 / 独立コンサルタント", "研究開発部門のトップ"],
+                onepoint: "専門用語を並べるのではなく、専門外の人（経営者）に対して「リスクとリターン」を平易な言葉で説明できる能力が、報酬アップの決め手になります。"
+            },
+            "クライアント志向型プロフェッショナル": {
+                subtitle: "〜顧客の心を掴み、信頼を収益に変えるトップランナー〜",
+                marketValue: "AIが進化しても、高度な「交渉」「利害調整」「信頼構築」は人間にしかできません。特に無形商材や高額商材におけるハイレベルな折衝力は、どのようなビジネスモデルでも収益の柱として機能します。",
+                nextActions: [
+                    "<strong>[Lv.1] 顧客情報の収集</strong><br>重要顧客の最新プレスリリースや決算資料を読み、顧客の経営状況を把握しましょう。",
+                    "<strong>[Lv.2] ソリューション提案力</strong><br>御用聞き営業から脱却し、顧客自身も気づいていない「真の課題（インサイト）」を提示するスタイルを確立しましょう。",
+                    "<strong>[Lv.3] 経営視点の獲得</strong><br>クライアントの担当者だけでなく、決裁者（役員クラス）と対等にビジネスの話ができるよう、数字を読み込んでください。"
+                ],
+                roadmap: ["営業本部長 / CRO（最高収益責任者）", "カントリーマネージャー（外資系）", "カスタマーサクセス責任者"],
+                onepoint: "「売上数字」は当然ですが、「再現性のある営業プロセスの構築」や「若手の育成手法」を言語化できていると、マネジメント職としての評価が跳ね上がります。"
+            },
+            "事業変革リーダー": {
+                subtitle: "〜混沌を恐れず、ゼロからイチを生み出す開拓者〜",
+                marketValue: "新規事業の立ち上げ、不採算事業の再生、組織の急拡大など、カオスな状況を楽しめる人材は貴重です。整っていない環境で自走し、道を作る力は、ベンチャー企業や大企業のイノベーション部門で最も求められる資質です。",
+                nextActions: [
+                    "<strong>[Lv.1] ゼロベース思考</strong><br>「もし今の事業が明日なくなったら何をするか」を1つ考え、メモに残しましょう。",
+                    "<strong>[Lv.2] 仮説検証の高速化</strong><br>完璧な計画を立てるより、小さなプロトタイプを市場に出してフィードバックを得るサイクル（PDCA）を高速化させてください。",
+                    "<strong>[Lv.3] 「撤退」の基準作り</strong><br>攻めるだけでなく、ダメな時にどこで損切りするかという、冷徹な判断軸を持つ訓練をしましょう。"
+                ],
+                roadmap: ["起業家 / CEO", "新規事業開発室長", "事業再生マネージャー"],
+                onepoint: "失敗経験こそが資産です。「なぜ失敗したか」「次にどう活かすか」を深く内省し語れる人は、投資家や経営陣から深い信頼を得られます。"
+            },
+            "マルチタレント型ゼネラリスト": {
+                subtitle: "〜あらゆるピースを繋ぎ合わせ、組織を機能させる万能の接着剤〜",
+                marketValue: "変化の激しい現代では「何でも屋」ではなく「全体最適化のプロ」として再評価されています。部門間の壁を取り払い、プロジェクトを前に進める力は、COOやChief of Staff（社長室長）として極めて重要です。",
+                nextActions: [
+                    "<strong>[Lv.1] コネクションの可視化</strong><br>自分が繋げられそうな「部署と部署」や「人と人」を書き出してみましょう。",
+                    "<strong>[Lv.2] プロジェクトマネジメント（PM）の体系化</strong><br>自分の調整力を、PMBOKなどのフレームワークと照らし合わせ、「属人的なスキル」から「体系的な手法」へ昇華させてください。",
+                    "<strong>[Lv.3] 「翻訳者」としてのポジショニング</strong><br>営業と開発、経営と現場など、言葉が通じにくい部署の間に入り、通訳として機能する実績を作りましょう。"
+                ],
+                roadmap: ["COO（最高執行責任者）", "Chief of Staff（経営企画・社長室長）", "大規模プロジェクトマネージャー"],
+                onepoint: "「何でもできます」は「何もできません」と取られるリスクがあります。「私は、複雑な利害関係を調整し、プロジェクトを完遂させるプロです」と、機能（Function）としての強みを定義してください。"
+            }
+        };
+
+        // --- 保存用キーと状態管理 ---
+        const STORAGE_KEY = 'kotora_career_diagnosis_v2'; 
+        let currentQuestion = 0;
+        let answers = {};
+        let scores = {};
+
+        // --- 初期化 ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initStorageCheck(); // 履歴確認
+            
+            document.getElementById('startBtn').addEventListener('click', startDiagnosis);
+            document.getElementById('restartBtn').addEventListener('click', startDiagnosis);
+            document.getElementById('resumeBtn').addEventListener('click', restorePreviousResult);
+            
+            document.getElementById('prevBtn').addEventListener('click', prevQuestion);
+            document.getElementById('nextBtn').addEventListener('click', nextQuestion);
+            document.getElementById('retryBtn').addEventListener('click', () => location.reload());
+        });
+
+        // --- データ保存・読み込みヘルパー ---
+        function getStorageData() {
+            try {
+                const data = localStorage.getItem(STORAGE_KEY);
+                return data ? JSON.parse(data) : { latest: null, actions: {} };
+            } catch (e) {
+                console.error("Storage Error:", e);
+                return { latest: null, actions: {} };
+            }
+        }
+
+        function saveStorageData(data) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        // --- 初期表示ロジック（リピーター判定） ---
+        function initStorageCheck() {
+            const data = getStorageData();
+            
+            // 最新の結果履歴が存在する場合
+            if (data.latest && data.latest.type) {
+                const welcomeSection = document.getElementById('welcomeSection');
+                const introSection = document.getElementById('introSection');
+                
+                // UI表示切り替え
+                welcomeSection.style.display = 'block';
+                introSection.style.display = 'none';
+                
+                // 前回の結果情報を埋め込み
+                document.getElementById('lastResultType').textContent = data.latest.type;
+                if (data.latest.date) {
+                    const d = new Date(data.latest.date);
+                    document.getElementById('lastDate').textContent = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
+                } else {
+                    document.getElementById('lastDate').textContent = "不明";
+                }
+            }
+        }
+
+        // --- 画面遷移・操作系 ---
+        function startDiagnosis() {
+            document.getElementById('page-start').classList.remove('active');
+            document.getElementById('page-questions').classList.add('active');
+            showQuestion(0);
+        }
+
+        function restorePreviousResult() {
+            const data = getStorageData();
+            if (data.latest && data.latest.type) {
+                const typeName = data.latest.type;
+                
+                // 結果画面へデータをセット
+                document.getElementById('resultType').textContent = typeName;
+                document.getElementById('resultDescription').textContent = TYPE_INFO[typeName];
+                
+                // 詳細レポートとToDoの復元
+                displayDetailReport(typeName);
+                
+                // 画面遷移（質問をスキップ）
+                document.getElementById('page-start').classList.remove('active');
+                document.getElementById('page-results').classList.add('active');
+            } else {
+                alert("データの読み込みに失敗しました。最初から診断してください。");
+                startDiagnosis();
+            }
+        }
+
+        function showQuestion(index) {
+            currentQuestion = index;
+            const q = questions[index];
+            const container = document.getElementById('questionContainer');
+            const inputType = q.type === 'checkbox' ? 'checkbox' : 'radio';
+            const inputName = `question_${q.id}`;
+            
+            let html = `<div class="question-title">Q${index + 1}. ${q.text}</div>`;
+            if (inputType === 'checkbox') html += `<div class="question-note">✓ 複数選択可</div>`;
+            
+            q.options.forEach((option, i) => {
+                const isChecked = checkIfSelected(q.id, i, inputType);
+                const selectedClass = isChecked ? 'selected' : '';
+                html += `
+                    <div class="option ${selectedClass}" data-question="${index}" data-option="${i}">
+                        <input type="${inputType}" name="${inputName}" value="${i}" id="q${q.id}_opt${i}" ${isChecked ? 'checked' : ''}>
+                        <span>${option.text}</span>
+                    </div>`;
+            });
+            
+            container.innerHTML = html;
+            
+            container.querySelectorAll('.option').forEach(optionEl => {
+                optionEl.addEventListener('click', handleOptionClick);
+            });
+            
+            const progress = ((index + 1) / questions.length) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+            document.getElementById('progressText').textContent = `質問 ${index + 1} / ${questions.length}`;
+            
+            document.getElementById('prevBtn').disabled = index === 0;
+            document.getElementById('nextBtn').textContent = index === questions.length - 1 ? '診断結果へ' : '次へ';
+        }
+
+        function checkIfSelected(qId, optIndex, inputType) {
+            if (!answers[qId]) return false;
+            if (inputType === 'checkbox') return answers[qId].includes(optIndex);
+            return answers[qId] === optIndex;
+        }
+
+        function handleOptionClick(e) {
+            const qIndex = parseInt(this.dataset.question);
+            const optIndex = parseInt(this.dataset.option);
+            const q = questions[qIndex];
+            const inputType = q.type === 'checkbox' ? 'checkbox' : 'radio';
+            const checkbox = this.querySelector('input');
+            
+            if (inputType === 'checkbox') {
+                if (!answers[q.id]) answers[q.id] = [];
+                const idx = answers[q.id].indexOf(optIndex);
+                if (idx > -1) {
+                    answers[q.id].splice(idx, 1);
+                    checkbox.checked = false;
+                    this.classList.remove('selected');
+                } else {
+                    answers[q.id].push(optIndex);
+                    checkbox.checked = true;
+                    this.classList.add('selected');
+                }
+            } else {
+                answers[q.id] = optIndex;
+                checkbox.checked = true;
+                this.parentElement.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestion > 0) showQuestion(currentQuestion - 1);
+        }
+
+        function nextQuestion() {
+            const q = questions[currentQuestion];
+            if (!validateAnswer(q)) {
+                alert('選択肢を1つ以上選択してください。');
+                return;
+            }
+            if (currentQuestion < questions.length - 1) {
+                showQuestion(currentQuestion + 1);
+            } else {
+                calculateAndShowResult();
+            }
+        }
+
+        function validateAnswer(q) {
+            if (q.type === 'checkbox') return answers[q.id] && answers[q.id].length > 0;
+            return answers[q.id] !== undefined;
+        }
+
+        // --- 結果判定ロジック ---
+        function calculateAndShowResult() {
+            scores = {};
+            questions.forEach(q => {
+                const ans = answers[q.id];
+                if (ans === undefined) return;
+                const selectedOptions = Array.isArray(ans) ? ans : [ans];
+                selectedOptions.forEach(optIndex => {
+                    const optScores = q.options[optIndex].scores;
+                    for (const key in optScores) scores[key] = (scores[key] || 0) + optScores[key];
+                });
+            });
+
+            const resultType = determineType(scores);
+            
+            // --- ここで結果を保存 ---
+            const data = getStorageData();
+            data.latest = {
+                type: resultType,
+                date: new Date().getTime()
+            };
+            saveStorageData(data);
+            // ---------------------
+
+            document.getElementById('resultType').textContent = resultType;
+            document.getElementById('resultDescription').textContent = TYPE_INFO[resultType];
+            displayDetailReport(resultType);
+            document.getElementById('page-questions').classList.remove('active');
+            document.getElementById('page-results').classList.add('active');
+        }
+
+        function determineType(s) {
+            const get = (key) => s[key] || 0;
+            if (get('leadership') + get('strategy') + get('management') >= 13) return "戦略思考型リーダー";
+            if (get('finance') + get('analytical') >= 7) return "金融スペシャリスト";
+            if (get('consulting') + get('strategy') >= 8) return "コンサルティングプロフェッショナル";
+            if (get('it') + get('innovation') >= 7) return "テクノロジー・DXリーダー";
+            if (get('specialist') >= 8) return "専門性追求型エキスパート";
+            if (get('communication') + get('negotiation') >= 8) return "クライアント志向型プロフェッショナル";
+            if ((get('leadership') + get('versatility') >= 9) || (get('entrepreneurship') >= 5)) return "事業変革リーダー";
+            return "マルチタレント型ゼネラリスト";
+        }
+
+        // --- 詳細資料表示 ＆ ToDoリスト機能 ---
+        function displayDetailReport(resultType) {
+            const reportData = detailReports[resultType];
+            if (!reportData) return;
+            
+            document.getElementById('detailTitle').textContent = resultType;
+            document.getElementById('detailSubtitle').textContent = reportData.subtitle;
+            document.getElementById('marketValue').textContent = reportData.marketValue;
+            
+            // ToDoリスト生成 & データロード
+            const nextActionsUl = document.getElementById('nextActions');
+            nextActionsUl.innerHTML = '';
+            
+            // 保存されたデータを取得
+            const data = getStorageData();
+            const savedChecks = data.actions[resultType] || []; // このタイプのチェック状態配列
+            
+            // リスト生成
+            reportData.nextActions.forEach((action, index) => {
+                const isChecked = savedChecks[index] ? true : false;
+                const li = document.createElement('li');
+                li.className = isChecked ? 'todo-item completed' : 'todo-item';
+                
+                li.innerHTML = `
+                    <input type="checkbox" class="todo-checkbox" ${isChecked ? 'checked' : ''}>
+                    <label class="todo-label">${action}</label>
+                `;
+                
+                // クリックイベント（保存処理）
+                li.addEventListener('click', function(e) {
+                    if (e.target.tagName !== 'INPUT') {
+                        const checkbox = this.querySelector('input');
+                        checkbox.checked = !checkbox.checked;
+                    }
+                    
+                    const checkbox = this.querySelector('input');
+                    const newState = checkbox.checked;
+                    
+                    if (newState) {
+                        this.classList.add('completed');
+                    } else {
+                        this.classList.remove('completed');
+                    }
+                    
+                    // 保存処理
+                    saveActionState(resultType, index, newState);
+                    
+                    // プログレスバー更新
+                    updateProgressBar(resultType, reportData.nextActions.length);
+                });
+                
+                nextActionsUl.appendChild(li);
+            });
+            
+            // 初回のプログレスバー計算
+            updateProgressBar(resultType, reportData.nextActions.length);
+            
+            // ロードマップ
+            const roadmapUl = document.getElementById('roadmap');
+            roadmapUl.innerHTML = '';
+            reportData.roadmap.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                roadmapUl.appendChild(li);
+            });
+            
+            document.getElementById('onepoint').textContent = reportData.onepoint;
+        }
+
+        // ToDoデータを保存する関数
+        function saveActionState(type, index, isChecked) {
+            const data = getStorageData();
+            if (!data.actions[type]) data.actions[type] = [];
+            
+            data.actions[type][index] = isChecked;
+            saveStorageData(data);
+        }
+
+        // プログレスバーを更新する関数
+        function updateProgressBar(type, totalItems) {
+            const data = getStorageData();
+            const checks = data.actions[type] || [];
+            
+            let completedCount = 0;
+            for(let i=0; i<totalItems; i++) {
+                if(checks[i]) completedCount++;
+            }
+            
+            const percentage = Math.round((completedCount / totalItems) * 100);
+            
+            document.getElementById('actionPercent').textContent = `${percentage}%`;
+            document.getElementById('actionBar').style.width = `${percentage}%`;
+        }
+    </script>
+</body>
+</html>
