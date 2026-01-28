@@ -1,5 +1,5 @@
 // キャッシュの名前（バージョンアップ時はここを変える）
-const CACHE_NAME = 'kotora-career-v1';
+const CACHE_NAME = 'kotora-career-v2';
 
 // キャッシュするファイルのリスト
 const ASSETS_TO_CACHE = [
