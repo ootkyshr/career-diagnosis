@@ -1,14 +1,15 @@
-// キャッシュの名前（バージョンアップ）
-const CACHE_NAME = 'kotora-career-v3';
+// キャッシュの名前（バージョンをv4に変更）
+const CACHE_NAME = 'kotora-career-v4';
 
 // キャッシュするファイルのリスト
-// 外部のConfettiライブラリも含めることでオフライン動作を保証
+// ★ここに 'logo.png' を追加しました
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
+  './logo.png',
   'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js'
 ];
 
@@ -16,7 +17,8 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('Opened cache');
+      // 1つでもファイルがないとキャッシュ登録全体が失敗するため、
+      // 確実に存在するファイルだけを指定することが重要です
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
@@ -26,7 +28,6 @@ self.addEventListener('install', (event) => {
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((response) => {
-      // キャッシュにあればそれを返す、なければネットワークへ
       return response || fetch(event.request);
     })
   );
