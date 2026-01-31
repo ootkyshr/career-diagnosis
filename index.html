@@ -13,6 +13,9 @@
     <link rel="apple-touch-icon" href="icon-192.png">
     <meta name="theme-color" content="#f5f7fa">
 
+    <!-- 紙吹雪用ライブラリ (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
     <style>
         /* --- アニメーション変数の定義 --- */
         :root {
@@ -26,9 +29,9 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
             line-height: 1.6; color: #333;
-            background: #f5f7fa; /* 背景をシンプルに（アニメーション負荷軽減） */
+            background: #f5f7fa;
             min-height: 100vh; padding: 20px;
-            overflow-x: hidden; /* 横スクロール防止 */
+            overflow-x: hidden;
         }
         .container { max-width: 600px; margin: 0 auto; position: relative; min-height: 100vh; }
         
@@ -55,10 +58,8 @@
             transition: all 0.2s var(--ease-out-quint), transform 0.1s var(--ease-out-quint);
             cursor: pointer;
         }
-        /* 押した時の「沈み込み」演出 */
         .btn:active, .btn-nav:active, .option:active, .todo-item:active, .register-btn:active {
-            transform: scale(0.96) !important;
-            opacity: 0.9;
+            transform: scale(0.96) !important; opacity: 0.9;
         }
 
         /* メインボタン */
@@ -84,36 +85,24 @@
             box-shadow: none; margin-top: 15px; font-size: 15px; padding: 15px;
         }
 
-        /* --- 画面遷移アニメーション (Page Transitions) --- */
-        .page {
-            display: none; width: 100%;
-            /* 絶対配置にしないと遷移時に崩れることがあるが、高さ可変のため今回はJSで制御 */
-        }
+        /* --- 画面遷移アニメーション --- */
+        .page { display: none; width: 100%; }
         .page.active { display: block; }
 
-        /* 右から入ってくる */
-        .slide-in-right {
-            animation: slideInRight 0.5s var(--ease-out-quint) forwards;
-        }
+        .slide-in-right { animation: slideInRight 0.5s var(--ease-out-quint) forwards; }
         @keyframes slideInRight {
             from { opacity: 0; transform: translateX(30px) scale(0.95); }
             to { opacity: 1; transform: translateX(0) scale(1); }
         }
 
-        /* 質問カードの遷移 */
+        /* 質問カード遷移 */
         .question-wrapper { position: relative; }
         .question-content { transition: opacity 0.3s ease; }
         
-        .fade-out-left {
-            animation: fadeOutLeft 0.3s var(--ease-out-quint) forwards;
-        }
-        @keyframes fadeOutLeft {
-            to { opacity: 0; transform: translateX(-30px); }
-        }
+        .fade-out-left { animation: fadeOutLeft 0.3s var(--ease-out-quint) forwards; }
+        @keyframes fadeOutLeft { to { opacity: 0; transform: translateX(-30px); } }
         
-        .fade-in-right {
-            animation: fadeInRight 0.4s var(--ease-out-quint) forwards;
-        }
+        .fade-in-right { animation: fadeInRight 0.4s var(--ease-out-quint) forwards; }
         @keyframes fadeInRight {
             from { opacity: 0; transform: translateX(30px); }
             to { opacity: 1; transform: translateX(0); }
@@ -167,25 +156,37 @@
             margin-bottom: 12px; border: 1px solid #eee; border-radius: 12px;
             background-color: #fff; 
         }
-        .todo-item.completed {
-            background-color: #f0fdf4; border-color: #86efac;
-        }
+        .todo-item.completed { background-color: #f0fdf4; border-color: #86efac; }
         .todo-checkbox { margin-top: 3px; margin-right: 12px; width: 20px; height: 20px; accent-color: #22c55e; }
 
         .todo-progress-area { padding: 20px; background: #f8fafc; border-radius: 12px; margin-bottom: 20px; }
         .todo-progress-bar-bg { height: 12px; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin-top: 8px; }
         .todo-progress-bar-fill { height: 100%; background: #22c55e; width: 0%; transition: width 1s var(--ease-out-quint); }
 
-        /* 詳細レポートなど */
+        /* 詳細レポート */
         .detail-report { display: none; margin-top: 30px; }
-        .register-btn { 
-            text-decoration: none; display: block; padding: 18px; margin-top: 10px;
-            background: var(--primary-gradient); color: #fff; border-radius: 50px; 
-            text-align: center; font-weight: bold; font-size: 16px;
+        .detail-subtitle { text-align: center; font-size: 15px; color: #667eea; font-weight: bold; margin-bottom: 25px; }
+        
+        .report-section-title { 
+            color:#003d7a; border-bottom:2px solid #eee; padding-bottom:10px; margin-bottom:15px; 
+            font-size: 18px; font-weight: bold;
         }
 
+        /* ロードマップ用リスト */
+        .roadmap-list { list-style: none; padding: 0; margin-left: 5px; }
+        .roadmap-list li { margin-bottom: 12px; color: #444; padding-left: 25px; position: relative; font-weight: 500; }
+        .roadmap-list li::before { content: "📍"; position: absolute; left: 0; top: 0; }
+
+        .register-btn { 
+            text-decoration: none; display: block; padding: 18px; 
+            background: var(--primary-gradient); color: #fff; border-radius: 50px; 
+            text-align: center; font-weight: bold; font-size: 16px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        .register-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5); }
+
         footer { text-align: center; margin-top: 40px; color: #999; font-size: 12px; padding-bottom: 20px;}
-    </style>
+    </script>
 </head>
 <body>
     <div class="container">
@@ -226,11 +227,8 @@
                     <div style="text-align: center; font-size: 12px; color: #999; font-weight:bold;" id="progressText">Q1 / 8</div>
                 </div>
                 
-                <!-- 質問カード（アニメーション用ラッパー） -->
                 <div class="question-wrapper">
-                    <div id="questionContainer" class="question-content">
-                        <!-- ここに質問がJSで入る -->
-                    </div>
+                    <div id="questionContainer" class="question-content"></div>
                 </div>
 
                 <div class="navigation-buttons">
@@ -258,13 +256,20 @@
                     </div>
 
                     <div id="detailReport" class="detail-report">
+                        <!-- サブタイトル -->
+                        <div class="stagger-item" style="animation-delay: 0.25s;">
+                            <p id="detailSubtitle" class="detail-subtitle"></p>
+                        </div>
+
+                        <!-- 市場価値 -->
                         <div class="stagger-item" style="animation-delay: 0.3s;">
-                            <h3 style="color:#003d7a; border-bottom:2px solid #eee; padding-bottom:10px; margin-bottom:15px;">📈 市場価値</h3>
+                            <h3 class="report-section-title">📈 市場価値</h3>
                             <p id="marketValue" style="font-size:14px; color:#444;"></p>
                         </div>
 
+                        <!-- アクションリスト -->
                         <div class="stagger-item" style="animation-delay: 0.4s; margin-top:30px;">
-                            <h3 style="color:#003d7a; border-bottom:2px solid #eee; padding-bottom:10px; margin-bottom:15px;">🚀 ネクスト・アクション</h3>
+                            <h3 class="report-section-title">🚀 ネクスト・アクション</h3>
                             <div class="todo-progress-area">
                                 <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px; color:#003d7a;">
                                     <span>達成度</span>
@@ -276,8 +281,26 @@
                             </div>
                             <div id="nextActions"></div>
                         </div>
+
+                        <!-- ロードマップ -->
+                        <div class="stagger-item" style="animation-delay: 0.5s; margin-top:30px;">
+                            <h3 class="report-section-title">🗺 キャリアロードマップ</h3>
+                            <ul id="roadmap" class="roadmap-list"></ul>
+                        </div>
+
+                        <!-- ワンポイント -->
+                        <div class="stagger-item" style="animation-delay: 0.6s; margin-top:30px;">
+                            <h3 class="report-section-title">💡 コトラからのワンポイント</h3>
+                            <p id="onepoint" style="font-size:14px; color:#444; background:#f0f7ff; padding:15px; border-radius:8px; border:1px solid #d0e1f5;"></p>
+                        </div>
+
+                        <!-- 下部登録ボタン -->
+                        <div class="stagger-item" style="animation-delay: 0.7s; margin-top:40px;">
+                            <p class="register-microcopy" style="text-align:center; font-size:14px; color:#666; margin-bottom:10px;">検討が進みやすくなります</p>
+                            <a href="https://www.kotora.jp/service/tenshoku_entry.php?utm_source=tool&utm_medium=tool&utm_campaign=note_carrierdiagnostictool" class="register-btn" target="_blank">無料で登録して、情報収集を始める</a>
+                        </div>
                         
-                        <div class="stagger-item" style="animation-delay: 0.5s; margin-top:30px; text-align:center;">
+                        <div class="stagger-item" style="animation-delay: 0.8s; margin-top:30px; text-align:center;">
                             <button class="btn-nav" id="retryBtn" style="width:auto; padding:10px 30px;">タイトルへ戻る</button>
                         </div>
                     </div>
@@ -366,36 +389,60 @@
 
         const detailReports = {
             "戦略思考型リーダー": {
+                subtitle: "〜組織を勝利に導く、経営の羅針盤〜",
                 marketValue: "不確実性の高い現代において、ファクトに基づき論理的に進むべき道を示せる人材は希少です。特に「人を動かすリーダーシップ」を兼ね備えている点で、CxO候補としての市場価値が非常に高い状態です。",
-                nextActions: ["「意思決定」の言語化プロセス共有", "非連続な成長（改革）の構想", "反対意見を持つメンバーとの1on1"]
+                nextActions: ["「意思決定」の言語化プロセス共有", "非連続な成長（改革）の構想", "反対意見を持つメンバーとの1on1"],
+                roadmap: ["事業責任者（Business Unit Head）", "CSO（最高戦略責任者）", "経営企画部長"],
+                onepoint: "面接では「戦略の美しさ」よりも「泥臭い実行フェーズで、抵抗勢力をどう説得したか」という人間的な調整力のエピソードが高く評価されます。"
             },
             "金融スペシャリスト": {
-                marketValue: "数字という共通言語を操れるあなたは、どの業界でも重宝されます。特に「投資対効果（ROI）」や「ファイナンス戦略」視点を持っている場合、PEファンドやCFO候補として引く手あまたです。",
-                nextActions: ["現場オペレーションと商流の理解", "エクイティストーリーの構築訓練", "分析レポートのアウトプット"]
+                subtitle: "〜資本の流れを読み解き、企業価値を最大化する参謀〜",
+                marketValue: "数字という世界共通言語を操れるあなたは、どの業界でも重宝されます。特に「投資対効果（ROI）」や「ファイナンス戦略」視点を持っている場合、PEファンドやCFO候補として引く手あまたです。",
+                nextActions: ["現場オペレーションと商流の理解", "エクイティストーリーの構築訓練", "分析レポートのアウトプット"],
+                roadmap: ["CFO（最高財務責任者）", "PEファンド / ベンチャーキャピタリスト", "M&Aアドバイザリー"],
+                onepoint: "「守り（コンプライアンス・管理）」だけでなく、「攻め（資金調達・M&A・投資）」の経験を積める環境に身を置くことが、理想の年収アップを実現する鍵です。"
             },
             "コンサルティングプロフェッショナル": {
+                subtitle: "〜難問を解決し、クライアントに変革をもたらす知の巨人〜",
                 marketValue: "短期間で本質的な課題を特定し、解決策を提示するスキルは即戦力です。DXやサステナビリティなど正解のないテーマにおいて、あなたのスキルは特に輝きます。",
-                nextActions: ["課題のロジックツリー分解", "現場レベルへの実行落とし込み", "再指名される関係構築"]
+                nextActions: ["課題のロジックツリー分解", "現場レベルへの実行落とし込み", "再指名される関係構築"],
+                roadmap: ["コンサルティングファーム パートナー", "大手事業会社 経営企画室長", "PEファンド 投資先バリューアップ担当"],
+                onepoint: "事業会社への転職を目指す場合、「評論家」と見られないよう注意が必要です。「自ら手を動かし、泥をかぶった経験」を職務経歴書にどう盛り込むかが重要です。"
             },
             "テクノロジー・DXリーダー": {
+                subtitle: "〜技術とビジネスを融合させ、未来を実装する建築家〜",
                 marketValue: "「技術」と「ビジネス（利益）」を翻訳できる人材は極めて不足しています。経営層とエンジニアの共通言語を持つあなたは、現代企業の最重要人物です。",
-                nextActions: ["技術投資のPL（損益）試算", "技術課題の非エンジニア向け翻訳", "導入時のチェンジマネジメント"]
+                nextActions: ["技術投資のPL（損益）試算", "技術課題の非エンジニア向け翻訳", "導入時のチェンジマネジメント"],
+                roadmap: ["CTO（最高技術責任者） / CDO（最高デジタル責任者）", "VPoE（Vice President of Engineering）", "DX推進本部長"],
+                onepoint: "ハイクラス求人では、特定の言語スキルよりも「技術選定の理由」や「エンジニア組織の採用・評価制度の構築経験」が問われます。"
             },
             "専門性追求型エキスパート": {
+                subtitle: "〜特定の領域を極め、代替不可能な価値を提供する職人〜",
                 marketValue: "「この分野なら〇〇さん」という第一人者ポジションは景気変動に強く、独立も可能です。知識の深さがそのまま他者の参入障壁（防御力）になります。",
-                nextActions: ["最新論文・ニュースの収集", "社外発信によるブランド化", "周辺ビジネス領域への知識応用"]
+                nextActions: ["最新論文・ニュースの収集", "社外発信によるブランド化", "周辺ビジネス領域への知識応用"],
+                roadmap: ["専門役員（CLO、CISOなど）", "特定領域の技術顧問 / 独立コンサルタント", "研究開発部門のトップ"],
+                onepoint: "専門用語を並べるのではなく、専門外の人（経営者）に対して「リスクとリターン」を平易な言葉で説明できる能力が、報酬アップの決め手になります。"
             },
             "クライアント志向型プロフェッショナル": {
+                subtitle: "〜顧客の心を掴み、信頼を収益に変えるトップランナー〜",
                 marketValue: "AIが進化しても、高度な「交渉」や「信頼構築」は人間にしかできません。無形商材や高額商材における折衝力は、どんなビジネスでも収益の柱です。",
-                nextActions: ["顧客企業の経営状況把握", "真の課題（インサイト）の提案", "決裁者クラスとの対話"]
+                nextActions: ["顧客企業の経営状況把握", "真の課題（インサイト）の提案", "決裁者クラスとの対話"],
+                roadmap: ["営業本部長 / CRO（最高収益責任者）", "カントリーマネージャー（外資系）", "カスタマーサクセス責任者"],
+                onepoint: "「売上数字」は当然ですが、「再現性のある営業プロセスの構築」や「若手の育成手法」を言語化できていると、マネジメント職としての評価が跳ね上がります。"
             },
             "事業変革リーダー": {
+                subtitle: "〜混沌を恐れず、ゼロからイチを生み出す開拓者〜",
                 marketValue: "新規事業や組織急拡大など、カオスな状況を楽しめる人材は貴重です。整っていない環境で自走し道を作る力は、イノベーション部門で最も求められます。",
-                nextActions: ["ゼロベースでの事業構想", "プロトタイプによる高速PDCA", "撤退ラインの明確化"]
+                nextActions: ["ゼロベースでの事業構想", "プロトタイプによる高速PDCA", "撤退ラインの明確化"],
+                roadmap: ["起業家 / CEO", "新規事業開発室長", "事業再生マネージャー"],
+                onepoint: "失敗経験こそが資産です。「なぜ失敗したか」「次にどう活かすか」を深く内省し語れる人は、投資家や経営陣から深い信頼を得られます。"
             },
             "マルチタレント型ゼネラリスト": {
+                subtitle: "〜あらゆるピースを繋ぎ合わせ、組織を機能させる万能の接着剤〜",
                 marketValue: "変化の激しい現代では「全体最適化のプロ」として再評価されています。部門間の壁を取り払いプロジェクトを進める力は、COOや社長室長として重要です。",
-                nextActions: ["組織間のコネクション可視化", "PM手法の体系化（脱属人化）", "部署間の翻訳者ポジション確立"]
+                nextActions: ["組織間のコネクション可視化", "PM手法の体系化（脱属人化）", "部署間の翻訳者ポジション確立"],
+                roadmap: ["COO（最高執行責任者）", "Chief of Staff（経営企画・社長室長）", "大規模プロジェクトマネージャー"],
+                onepoint: "「何でもできます」は「何もできません」と取られるリスクがあります。「私は、複雑な利害関係を調整し、プロジェクトを完遂させるプロです」と、機能（Function）としての強みを定義してください。"
             }
         };
 
@@ -406,39 +453,27 @@
         // --- 初期化 ---
         document.addEventListener('DOMContentLoaded', () => {
             initStorageCheck();
-            
-            // タップ遅延解消
             document.body.addEventListener('touchstart', function() {}, {passive: true});
-
             document.getElementById('startBtn').addEventListener('click', () => switchPage('page-start', 'page-questions'));
             document.getElementById('restartBtn').addEventListener('click', () => switchPage('page-start', 'page-questions'));
             document.getElementById('resumeBtn').addEventListener('click', restorePreviousResult);
-            
             document.getElementById('prevBtn').addEventListener('click', prevQuestion);
             document.getElementById('nextBtn').addEventListener('click', nextQuestion);
             document.getElementById('retryBtn').addEventListener('click', () => location.reload());
-
             showQuestion(0, 'init');
         });
 
-        // --- 画面遷移アニメーション関数 ---
         function switchPage(fromId, toId) {
             const fromPage = document.getElementById(fromId);
             const toPage = document.getElementById(toId);
-
-            // スクロール位置リセット
             window.scrollTo(0, 0);
-
             toPage.classList.add('active', 'slide-in-right');
-            
-            // アニメーション終了後にクラス整理
             setTimeout(() => {
                 fromPage.classList.remove('active');
                 toPage.classList.remove('slide-in-right');
             }, 500);
         }
 
-        // --- データ管理 ---
         function getStorageData() {
             try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { latest: null, actions: {} }; }
             catch { return { latest: null, actions: {} }; }
@@ -456,13 +491,11 @@
             }
         }
 
-        // --- 質問表示ロジック（スワイプ風アニメーション付き） ---
         function showQuestion(index, mode = 'next') {
             const container = document.getElementById('questionContainer');
             const q = questions[index];
             const inputType = q.type === 'checkbox' ? 'checkbox' : 'radio';
             
-            // 新しいHTMLを生成
             let html = `<div class="question-title" style="font-size:20px; font-weight:bold; margin-bottom:15px;">Q${index + 1}. ${q.text}</div>`;
             if (inputType === 'checkbox') html += `<div style="font-size:12px; color:#667eea; margin-bottom:15px;">✓ 複数選択可</div>`;
             
@@ -475,34 +508,23 @@
                     </div>`;
             });
 
-            // 初回表示ならそのまま描画
             if (mode === 'init') {
                 container.innerHTML = html;
             } else {
-                // アニメーション切り替え
                 container.classList.add('fade-out-left');
-                
                 setTimeout(() => {
                     container.innerHTML = html;
                     container.classList.remove('fade-out-left');
                     container.classList.add('fade-in-right');
-                    
-                    setTimeout(() => {
-                        container.classList.remove('fade-in-right');
-                    }, 400);
+                    setTimeout(() => container.classList.remove('fade-in-right'), 400);
                 }, 300);
             }
 
-            // プログレスバー更新
             const progress = ((index + 1) / questions.length) * 100;
             document.getElementById('progressFill').style.width = `${progress}%`;
             document.getElementById('progressText').textContent = `Q ${index + 1} / ${questions.length}`;
-            
             document.getElementById('prevBtn').disabled = index === 0;
             document.getElementById('nextBtn').textContent = index === questions.length - 1 ? '診断結果を見る' : '次へ';
-            
-            // ページ上部へスクロール（モバイル用）
-            // container.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         function checkIfSelected(qId, optIndex, inputType) {
@@ -511,11 +533,9 @@
             return answers[qId] === optIndex;
         }
 
-        // グローバルスコープに関数公開（HTMLのonclick用）
         window.handleOptionClick = function(el, qIndex, optIndex, inputType) {
             const q = questions[qIndex];
             const checkbox = el.querySelector('input');
-            
             if (inputType === 'checkbox') {
                 if (!answers[q.id]) answers[q.id] = [];
                 const idx = answers[q.id].indexOf(optIndex);
@@ -530,18 +550,13 @@
                 }
             } else {
                 answers[q.id] = optIndex;
-                // 他の選択を解除
                 const allOpts = el.parentElement.querySelectorAll('.option');
                 allOpts.forEach(o => {
                     o.classList.remove('selected');
                     o.querySelector('input').checked = false;
                 });
-                // 自分を選択
                 checkbox.checked = true;
                 el.classList.add('selected');
-
-                // シングル選択の場合は自動で次へ進む演出を入れても良いが、
-                // 誤タップ防止のため今回はボタン遷移のままにする
             }
         };
 
@@ -555,7 +570,6 @@
         function nextQuestion() {
             const q = questions[currentQuestion];
             if (!validateAnswer(q)) {
-                // 揺れるアニメーションなどで警告しても良い
                 alert('選択肢を選んでください');
                 return;
             }
@@ -584,7 +598,6 @@
                 });
             });
 
-            // 判定ロジック
             const get = k => scores[k] || 0;
             let type = "マルチタレント型ゼネラリスト";
             if (get('leadership') + get('strategy') + get('management') >= 13) type = "戦略思考型リーダー";
@@ -595,19 +608,15 @@
             else if (get('communication') + get('negotiation') >= 8) type = "クライアント志向型プロフェッショナル";
             else if ((get('leadership') + get('versatility') >= 9) || (get('entrepreneurship') >= 5)) type = "事業変革リーダー";
 
-            // 保存
             const data = getStorageData();
             data.latest = { type: type, date: new Date().getTime() };
             saveStorageData(data);
 
-            // 表示
             document.getElementById('resultType').textContent = type;
             document.getElementById('resultDescription').textContent = TYPE_INFO[type];
             displayDetailReport(type);
             
             switchPage('page-questions', 'page-results');
-            
-            // 結果画面のアニメーション発火
             triggerResultAnimations();
         }
 
@@ -624,11 +633,10 @@
         }
 
         function triggerResultAnimations() {
-            // Staggerアニメーション用のクラス付与
             const items = document.querySelectorAll('.stagger-item');
             items.forEach(item => {
                 item.classList.remove('stagger-visible');
-                void item.offsetWidth; // リフロー
+                void item.offsetWidth;
                 item.classList.add('stagger-visible');
             });
         }
@@ -638,9 +646,9 @@
             if (!data) return;
 
             document.getElementById('detailReport').style.display = 'block';
+            document.getElementById('detailSubtitle').textContent = data.subtitle;
             document.getElementById('marketValue').textContent = data.marketValue;
 
-            // ToDo生成
             const list = document.getElementById('nextActions');
             list.innerHTML = '';
             const stored = getStorageData();
@@ -658,15 +666,33 @@
                         cb.checked = !cb.checked;
                     }
                     const cb = this.querySelector('input');
+                    
+                    // 完了状態の切り替え
                     if(cb.checked) this.classList.add('completed');
                     else this.classList.remove('completed');
                     
+                    // 保存＆プログレス更新＆演出チェック
                     saveActionState(type, i, cb.checked);
-                    updateProgress(type, data.nextActions.length);
+                    
+                    // ★ここが更新ポイント：チェックした瞬間に100%なら演出発動
+                    if (cb.checked) {
+                        checkCompletion(type, data.nextActions.length);
+                    }
                 });
                 list.appendChild(div);
             });
+            // 初期ロード時の進捗バー表示
             updateProgress(type, data.nextActions.length);
+
+            const roadmapUl = document.getElementById('roadmap');
+            roadmapUl.innerHTML = '';
+            data.roadmap.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                roadmapUl.appendChild(li);
+            });
+
+            document.getElementById('onepoint').textContent = data.onepoint;
         }
 
         function saveActionState(type, idx, val) {
@@ -676,6 +702,7 @@
             saveStorageData(d);
         }
 
+        // 進捗バーの更新（演出なし）
         function updateProgress(type, total) {
             const d = getStorageData();
             const c = d.actions[type] || [];
@@ -683,6 +710,87 @@
             const pct = Math.round((count / total) * 100);
             document.getElementById('actionPercent').textContent = `${pct}%`;
             document.getElementById('actionBar').style.width = `${pct}%`;
+        }
+
+        // ★新機能：完了判定と演出呼び出し
+        function checkCompletion(type, total) {
+            const d = getStorageData();
+            const c = d.actions[type] || [];
+            const count = c.filter(Boolean).length;
+            const pct = Math.round((count / total) * 100);
+
+            // バーを更新
+            document.getElementById('actionPercent').textContent = `${pct}%`;
+            document.getElementById('actionBar').style.width = `${pct}%`;
+
+            // 100%ならお祝い演出
+            if (pct === 100) {
+                celebrate();
+            }
+        }
+
+        // ★新機能：お祝い演出（紙吹雪＋音）
+        function celebrate() {
+            // 紙吹雪（confetti）
+            if (typeof confetti === 'function') {
+                const duration = 2000;
+                const end = Date.now() + duration;
+
+                (function frame() {
+                    confetti({
+                        particleCount: 5,
+                        angle: 60,
+                        spread: 55,
+                        origin: { x: 0 },
+                        colors: ['#667eea', '#764ba2', '#ffeb3b']
+                    });
+                    confetti({
+                        particleCount: 5,
+                        angle: 120,
+                        spread: 55,
+                        origin: { x: 1 },
+                        colors: ['#667eea', '#764ba2', '#ffeb3b']
+                    });
+
+                    if (Date.now() < end) {
+                        requestAnimationFrame(frame);
+                    }
+                }());
+            }
+
+            // Web Audio API による効果音生成（外部ファイル不要）
+            playCelebrationSound();
+        }
+
+        function playCelebrationSound() {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext();
+
+            // 「チャララン！」というアルペジオ音を生成
+            // C5, E5, G5, C6 の和音構成
+            const notes = [523.25, 659.25, 783.99, 1046.50];
+            
+            notes.forEach((freq, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                
+                osc.type = 'triangle'; // 柔らかくキラキラした音色
+                osc.frequency.value = freq;
+                
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                const startTime = ctx.currentTime + (i * 0.05); // 少しずつずらす
+                
+                // 音量エンベロープ（減衰）
+                gain.gain.setValueAtTime(0, startTime);
+                gain.gain.linearRampToValueAtTime(0.1, startTime + 0.01);
+                gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
+                
+                osc.start(startTime);
+                osc.stop(startTime + 0.4);
+            });
         }
     </script>
 </body>

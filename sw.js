@@ -1,15 +1,15 @@
-// キャッシュの名前（バージョンアップ時はここを変える）
-const CACHE_NAME = 'kotora-career-v2';
+// キャッシュの名前（バージョンアップ）
+const CACHE_NAME = 'kotora-career-v3';
 
 // キャッシュするファイルのリスト
+// 外部のConfettiライブラリも含めることでオフライン動作を保証
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
   './icon-192.png',
-  './icon-512.png'
-  // 外部画像(ロゴ等)がある場合はここに追加するか、
-  // オンライン時のみ取得する方針ならそのままでOK
+  './icon-512.png',
+  'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js'
 ];
 
 // インストール処理
