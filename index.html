@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>キャリア診断ツール | 株式会社コトラ</title>
     
-    <!-- PWA設定（復活） -->
+    <!-- PWA設定 -->
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -163,10 +163,14 @@
         .todo-item {
             display: flex; align-items: flex-start; padding: 15px;
             margin-bottom: 12px; border: 1px solid #eee; border-radius: 12px;
-            background-color: #fff; 
+            background-color: #fff; line-height: 1.6;
         }
         .todo-item.completed { background-color: #f0fdf4; border-color: #86efac; }
-        .todo-checkbox { margin-top: 3px; margin-right: 12px; width: 20px; height: 20px; accent-color: #22c55e; }
+        .todo-checkbox { margin-top: 4px; margin-right: 12px; min-width: 20px; height: 20px; accent-color: #22c55e; cursor: pointer; }
+        
+        /* テキスト内の強調表示用 */
+        .todo-item strong { color: #003d7a; font-weight: 700; display: block; margin-bottom: 4px; }
+        .todo-item span { font-size: 14px; color: #444; }
 
         .todo-progress-area { padding: 20px; background: #f8fafc; border-radius: 12px; margin-bottom: 20px; }
         .todo-progress-bar-bg { height: 12px; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin-top: 8px; }
@@ -395,60 +399,93 @@
             "マルチタレント型ゼネラリスト": "幅広い知識とスキルを持ち、柔軟に対応できるタイプ。多様なプロジェクトで横断的に活躍します。"
         };
 
+        // 詳細データ（アクションプランを具体的に復元）
         const detailReports = {
             "戦略思考型リーダー": {
                 subtitle: "〜組織を勝利に導く、経営の羅針盤〜",
                 marketValue: "不確実性の高い現代において、ファクトに基づき論理的に進むべき道を示せる人材は希少です。特に「人を動かすリーダーシップ」を兼ね備えている点で、CxO候補としての市場価値が非常に高い状態です。",
-                nextActions: ["「意思決定」の言語化プロセス共有", "非連続な成長（改革）の構想", "反対意見を持つメンバーとの1on1"],
+                nextActions: [
+                    "<strong>[Lv.1] 「意思決定」の言語化</strong><br>チームに対して、結論だけでなく「なぜその判断に至ったか」の思考プロセスを共有する頻度を上げてください。",
+                    "<strong>[Lv.2] 非連続な成長の模索</strong><br>既存事業の延長線（改善）ではなく、全く新しい収益源やビジネスモデル（改革）を構想する時間を週に1時間は確保しましょう。",
+                    "<strong>[Lv.3] 反対意見の吸収</strong><br>自分の意見に反対しそうなメンバーと1対1で話し、懸念点を聞き出す時間を作ってください。"
+                ],
                 roadmap: ["事業責任者（Business Unit Head）", "CSO（最高戦略責任者）", "経営企画部長"],
                 onepoint: "面接では「戦略の美しさ」よりも「泥臭い実行フェーズで、抵抗勢力をどう説得したか」という人間的な調整力のエピソードが高く評価されます。"
             },
             "金融スペシャリスト": {
                 subtitle: "〜資本の流れを読み解き、企業価値を最大化する参謀〜",
                 marketValue: "数字という世界共通言語を操れるあなたは、どの業界でも重宝されます。特に「投資対効果（ROI）」や「ファイナンス戦略」視点を持っている場合、PEファンドやCFO候補として引く手あまたです。",
-                nextActions: ["現場オペレーションと商流の理解", "エクイティストーリーの構築訓練", "分析レポートのアウトプット"],
+                nextActions: [
+                    "<strong>[Lv.1] ビジネス理解の深化</strong><br>数字の裏側にある「現場のオペレーション」や「商流」を解像度高く理解するよう努めてください。",
+                    "<strong>[Lv.2] エクイティストーリーの構築</strong><br>自社やクライアント企業が「どうすれば株価（企業価値）が上がるか」を投資家目線で語る訓練をしましょう。",
+                    "<strong>[Lv.3] 分析レポート作成</strong><br>担当分野に関する分析レポートをA4・1枚で作成し、アウトプットする習慣をつけてください。"
+                ],
                 roadmap: ["CFO（最高財務責任者）", "PEファンド / ベンチャーキャピタリスト", "M&Aアドバイザリー"],
                 onepoint: "「守り（コンプライアンス・管理）」だけでなく、「攻め（資金調達・M&A・投資）」の経験を積める環境に身を置くことが、理想の年収アップを実現する鍵です。"
             },
             "コンサルティングプロフェッショナル": {
                 subtitle: "〜難問を解決し、クライアントに変革をもたらす知の巨人〜",
                 marketValue: "短期間で本質的な課題を特定し、解決策を提示するスキルは即戦力です。DXやサステナビリティなど正解のないテーマにおいて、あなたのスキルは特に輝きます。",
-                nextActions: ["課題のロジックツリー分解", "現場レベルへの実行落とし込み", "再指名される関係構築"],
+                nextActions: [
+                    "<strong>[Lv.1] ロジックツリー分解</strong><br>今抱えている課題を1つ、ロジックツリーで分解し、構造化して考える癖をつけましょう。",
+                    "<strong>[Lv.2] 「実行」へのコミット</strong><br>絵に描いた餅（綺麗な資料）で終わらせず、現場が動けるレベルまで落とし込む「実行支援」のスキルを磨きましょう。",
+                    "<strong>[Lv.3] アカウントマネジメント力</strong><br>課題解決だけでなく、「あなたにまた頼みたい」と思わせる営業力・関係構築力を意識してください。"
+                ],
                 roadmap: ["コンサルティングファーム パートナー", "大手事業会社 経営企画室長", "PEファンド 投資先バリューアップ担当"],
                 onepoint: "事業会社への転職を目指す場合、「評論家」と見られないよう注意が必要です。「自ら手を動かし、泥をかぶった経験」を職務経歴書にどう盛り込むかが重要です。"
             },
             "テクノロジー・DXリーダー": {
                 subtitle: "〜技術とビジネスを融合させ、未来を実装する建築家〜",
                 marketValue: "「技術」と「ビジネス（利益）」を翻訳できる人材は極めて不足しています。経営層とエンジニアの共通言語を持つあなたは、現代企業の最重要人物です。",
-                nextActions: ["技術投資のPL（損益）試算", "技術課題の非エンジニア向け翻訳", "導入時のチェンジマネジメント"],
+                nextActions: [
+                    "<strong>[Lv.1] PL（損益）感覚の養成</strong><br>導入するツールや開発するシステムが、どれだけのコスト削減や売上増に繋がるかを、常に金額で試算する癖をつけましょう。",
+                    "<strong>[Lv.2] 翻訳力の向上</strong><br>技術的な課題（技術的負債など）を、非エンジニア向けに専門用語なしで説明する文章を書いてみましょう。",
+                    "<strong>[Lv.3] 組織変革（チェンジマネジメント）</strong><br>システム導入時の現場の反発をどう抑え、定着させるか。「人」のマネジメントスキルを磨いてください。"
+                ],
                 roadmap: ["CTO（最高技術責任者） / CDO（最高デジタル責任者）", "VPoE（Vice President of Engineering）", "DX推進本部長"],
                 onepoint: "ハイクラス求人では、特定の言語スキルよりも「技術選定の理由」や「エンジニア組織の採用・評価制度の構築経験」が問われます。"
             },
             "専門性追求型エキスパート": {
                 subtitle: "〜特定の領域を極め、代替不可能な価値を提供する職人〜",
                 marketValue: "「この分野なら〇〇さん」という第一人者ポジションは景気変動に強く、独立も可能です。知識の深さがそのまま他者の参入障壁（防御力）になります。",
-                nextActions: ["最新論文・ニュースの収集", "社外発信によるブランド化", "周辺ビジネス領域への知識応用"],
+                nextActions: [
+                    "<strong>[Lv.1] 最新情報のキャッチアップ</strong><br>自分の専門分野のキーワードで検索し、最新ニュースや論文を1つ読みましょう。",
+                    "<strong>[Lv.2] 社外発信とネットワーキング</strong><br>社内だけでなく、業界団体やセミナー登壇、執筆などを通じて「個人の名前」でブランドを作ってください。",
+                    "<strong>[Lv.3] 周辺領域への染み出し</strong><br>専門知識を、隣接するビジネス領域（例：法務ならビジネス開発）とどう絡めるか意識してみましょう。"
+                ],
                 roadmap: ["専門役員（CLO、CISOなど）", "特定領域の技術顧問 / 独立コンサルタント", "研究開発部門のトップ"],
                 onepoint: "専門用語を並べるのではなく、専門外の人（経営者）に対して「リスクとリターン」を平易な言葉で説明できる能力が、報酬アップの決め手になります。"
             },
             "クライアント志向型プロフェッショナル": {
                 subtitle: "〜顧客の心を掴み、信頼を収益に変えるトップランナー〜",
                 marketValue: "AIが進化しても、高度な「交渉」や「信頼構築」は人間にしかできません。無形商材や高額商材における折衝力は、どんなビジネスでも収益の柱です。",
-                nextActions: ["顧客企業の経営状況把握", "真の課題（インサイト）の提案", "決裁者クラスとの対話"],
+                nextActions: [
+                    "<strong>[Lv.1] 顧客情報の収集</strong><br>重要顧客の最新プレスリリースや決算資料を読み、顧客の経営状況を把握しましょう。",
+                    "<strong>[Lv.2] ソリューション提案力</strong><br>御用聞き営業から脱却し、顧客自身も気づいていない「真の課題（インサイト）」を提示するスタイルを確立しましょう。",
+                    "<strong>[Lv.3] 経営視点の獲得</strong><br>クライアントの担当者だけでなく、決裁者（役員クラス）と対等にビジネスの話ができるよう、数字を読み込んでください。"
+                ],
                 roadmap: ["営業本部長 / CRO（最高収益責任者）", "カントリーマネージャー（外資系）", "カスタマーサクセス責任者"],
                 onepoint: "「売上数字」は当然ですが、「再現性のある営業プロセスの構築」や「若手の育成手法」を言語化できていると、マネジメント職としての評価が跳ね上がります。"
             },
             "事業変革リーダー": {
                 subtitle: "〜混沌を恐れず、ゼロからイチを生み出す開拓者〜",
                 marketValue: "新規事業や組織急拡大など、カオスな状況を楽しめる人材は貴重です。整っていない環境で自走し道を作る力は、イノベーション部門で最も求められます。",
-                nextActions: ["ゼロベースでの事業構想", "プロトタイプによる高速PDCA", "撤退ラインの明確化"],
+                nextActions: [
+                    "<strong>[Lv.1] ゼロベース思考</strong><br>「もし今の事業が明日なくなったら何をするか」を1つ考え、メモに残しましょう。",
+                    "<strong>[Lv.2] 仮説検証の高速化</strong><br>完璧な計画を立てるより、小さなプロトタイプを市場に出してフィードバックを得るサイクル（PDCA）を高速化させてください。",
+                    "<strong>[Lv.3] 「撤退」の基準作り</strong><br>攻めるだけでなく、ダメな時にどこで損切りするかという、冷徹な判断軸を持つ訓練をしましょう。"
+                ],
                 roadmap: ["起業家 / CEO", "新規事業開発室長", "事業再生マネージャー"],
                 onepoint: "失敗経験こそが資産です。「なぜ失敗したか」「次にどう活かすか」を深く内省し語れる人は、投資家や経営陣から深い信頼を得られます。"
             },
             "マルチタレント型ゼネラリスト": {
                 subtitle: "〜あらゆるピースを繋ぎ合わせ、組織を機能させる万能の接着剤〜",
                 marketValue: "変化の激しい現代では「全体最適化のプロ」として再評価されています。部門間の壁を取り払いプロジェクトを進める力は、COOや社長室長として重要です。",
-                nextActions: ["組織間のコネクション可視化", "PM手法の体系化（脱属人化）", "部署間の翻訳者ポジション確立"],
+                nextActions: [
+                    "<strong>[Lv.1] コネクションの可視化</strong><br>自分が繋げられそうな「部署と部署」や「人と人」を書き出してみましょう。",
+                    "<strong>[Lv.2] プロジェクトマネジメント（PM）の体系化</strong><br>自分の調整力を、PMBOKなどのフレームワークと照らし合わせ、「属人的なスキル」から「体系的な手法」へ昇華させてください。",
+                    "<strong>[Lv.3] 「翻訳者」としてのポジショニング</strong><br>営業と開発、経営と現場など、言葉が通じにくい部署の間に入り、通訳として機能する実績を作りましょう。"
+                ],
                 roadmap: ["COO（最高執行責任者）", "Chief of Staff（経営企画・社長室長）", "大規模プロジェクトマネージャー"],
                 onepoint: "「何でもできます」は「何もできません」と取られるリスクがあります。「私は、複雑な利害関係を調整し、プロジェクトを完遂させるプロです」と、機能（Function）としての強みを定義してください。"
             }
@@ -666,6 +703,7 @@
                 const div = document.createElement('div');
                 const isDone = !!checks[i];
                 div.className = `todo-item ${isDone ? 'completed' : ''}`;
+                // HTMLタグを含むテキストを挿入
                 div.innerHTML = `<input type="checkbox" class="todo-checkbox" ${isDone ? 'checked' : ''}><span>${txt}</span>`;
                 
                 div.addEventListener('click', function(e) {
@@ -780,56 +818,3 @@
     </script>
 </body>
 </html>
-
-#### 2. `sw.js`（キャッシュ復活・バージョンアップ版）
-
-```javascript
-// キャッシュの名前（バージョンをv6に変更して強制更新）
-const CACHE_NAME = 'kotora-career-v6';
-
-// キャッシュするファイルのリスト
-// ★ファイルがすべて存在するので、これらをすべてキャッシュします
-const ASSETS_TO_CACHE = [
-  './',
-  './index.html',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png',
-  './logo.png',
-  'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js'
-];
-
-// インストール処理
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      // 1つでもファイルがないとキャッシュ登録全体が失敗します
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
-  );
-});
-
-// フェッチ処理（オフライン対応）
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    })
-  );
-});
-
-// アクティベート処理（古いキャッシュの削除）
-self.addEventListener('activate', (event) => {
-  const cacheWhitelist = [CACHE_NAME];
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-  );
-});
