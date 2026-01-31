@@ -1,8 +1,8 @@
-// キャッシュの名前（バージョンをv4に変更）
-const CACHE_NAME = 'kotora-career-v4';
+// キャッシュの名前（バージョンをv6に変更して強制更新）
+const CACHE_NAME = 'kotora-career-v6';
 
 // キャッシュするファイルのリスト
-// ★ここに 'logo.png' を追加しました
+// ★ファイルがすべて存在するので、これらをすべてキャッシュします
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -28,6 +28,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((response) => {
+      // キャッシュにあればそれを返す、なければネットワークへ
       return response || fetch(event.request);
     })
   );

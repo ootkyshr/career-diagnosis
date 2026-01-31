@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>キャリア診断ツール | 株式会社コトラ</title>
     
-    <!-- PWA設定 -->
+    <!-- PWA設定（復活） -->
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -42,12 +42,10 @@
             text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.05);
             position: sticky; top: 10px; z-index: 100;
             display: flex; justify-content: center; align-items: center;
-            /* 画像読み込み前の高さを確保（ガタつき防止） */
             height: 70px; 
         }
         
         header img { 
-            /* サイズを固定して描画負荷を下げる */
             height: 32px; 
             width: auto;
             max-width: 100%;
@@ -201,8 +199,6 @@
 <body>
     <div class="container">
         <header>
-            <!-- ▼【重要】外部URLではなくローカルファイル(logo.png)を指定 -->
-            <!-- もしlogo.pngを用意できない場合は、元のURLに戻しても動きますが、遅延は発生します -->
             <img src="logo.png" alt="KOTORA" width="140" height="32">
         </header>
 
@@ -784,3 +780,56 @@
     </script>
 </body>
 </html>
+
+#### 2. `sw.js`（キャッシュ復活・バージョンアップ版）
+
+```javascript
+// キャッシュの名前（バージョンをv6に変更して強制更新）
+const CACHE_NAME = 'kotora-career-v6';
+
+// キャッシュするファイルのリスト
+// ★ファイルがすべて存在するので、これらをすべてキャッシュします
+const ASSETS_TO_CACHE = [
+  './',
+  './index.html',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
+  './logo.png',
+  'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js'
+];
+
+// インストール処理
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      // 1つでもファイルがないとキャッシュ登録全体が失敗します
+      return cache.addAll(ASSETS_TO_CACHE);
+    })
+  );
+});
+
+// フェッチ処理（オフライン対応）
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request);
+    })
+  );
+});
+
+// アクティベート処理（古いキャッシュの削除）
+self.addEventListener('activate', (event) => {
+  const cacheWhitelist = [CACHE_NAME];
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheWhitelist.indexOf(cacheName) === -1) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+});
