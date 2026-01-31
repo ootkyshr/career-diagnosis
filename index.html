@@ -41,8 +41,19 @@
             padding: 15px; margin-bottom: 20px; border-radius: 16px; 
             text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.05);
             position: sticky; top: 10px; z-index: 100;
+            display: flex; justify-content: center; align-items: center;
+            /* 画像読み込み前の高さを確保（ガタつき防止） */
+            height: 70px; 
         }
-        header img { height: 32px; object-fit: contain; }
+        
+        header img { 
+            /* サイズを固定して描画負荷を下げる */
+            height: 32px; 
+            width: auto;
+            max-width: 100%;
+            object-fit: contain; 
+            display: block; 
+        }
 
         /* カードデザイン */
         .card {
@@ -53,7 +64,7 @@
         }
         h2 { color: #003d7a; font-size: 24px; margin-bottom: 20px; text-align: center; font-weight: 800; }
         
-        /* --- マイクロインタラクション（ボタン） --- */
+        /* --- マイクロインタラクション --- */
         .btn, .btn-nav, .option, .todo-item, .register-btn {
             transition: all 0.2s var(--ease-out-quint), transform 0.1s var(--ease-out-quint);
             cursor: pointer;
@@ -163,10 +174,9 @@
         .todo-progress-bar-bg { height: 12px; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin-top: 8px; }
         .todo-progress-bar-fill { height: 100%; background: #22c55e; width: 0%; transition: width 1s var(--ease-out-quint); }
 
-        /* 詳細レポート */
+        /* 詳細レポートスタイル */
         .detail-report { display: none; margin-top: 30px; }
         .detail-subtitle { text-align: center; font-size: 15px; color: #667eea; font-weight: bold; margin-bottom: 25px; }
-        
         .report-section-title { 
             color:#003d7a; border-bottom:2px solid #eee; padding-bottom:10px; margin-bottom:15px; 
             font-size: 18px; font-weight: bold;
@@ -186,12 +196,14 @@
         .register-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5); }
 
         footer { text-align: center; margin-top: 40px; color: #999; font-size: 12px; padding-bottom: 20px;}
-    </script>
+    </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <img src="https://www.genspark.ai/api/files/s/iqlryruD" alt="KOTORA">
+            <!-- ▼【重要】外部URLではなくローカルファイル(logo.png)を指定 -->
+            <!-- もしlogo.pngを用意できない場合は、元のURLに戻しても動きますが、遅延は発生します -->
+            <img src="logo.png" alt="KOTORA" width="140" height="32">
         </header>
 
         <!-- スタート画面 -->
@@ -667,21 +679,19 @@
                     }
                     const cb = this.querySelector('input');
                     
-                    // 完了状態の切り替え
                     if(cb.checked) this.classList.add('completed');
                     else this.classList.remove('completed');
                     
-                    // 保存＆プログレス更新＆演出チェック
                     saveActionState(type, i, cb.checked);
                     
-                    // ★ここが更新ポイント：チェックした瞬間に100%なら演出発動
                     if (cb.checked) {
                         checkCompletion(type, data.nextActions.length);
+                    } else {
+                        updateProgress(type, data.nextActions.length);
                     }
                 });
                 list.appendChild(div);
             });
-            // 初期ロード時の進捗バー表示
             updateProgress(type, data.nextActions.length);
 
             const roadmapUl = document.getElementById('roadmap');
@@ -702,7 +712,6 @@
             saveStorageData(d);
         }
 
-        // 進捗バーの更新（演出なし）
         function updateProgress(type, total) {
             const d = getStorageData();
             const c = d.actions[type] || [];
@@ -712,43 +721,32 @@
             document.getElementById('actionBar').style.width = `${pct}%`;
         }
 
-        // ★新機能：完了判定と演出呼び出し
         function checkCompletion(type, total) {
             const d = getStorageData();
             const c = d.actions[type] || [];
             const count = c.filter(Boolean).length;
             const pct = Math.round((count / total) * 100);
 
-            // バーを更新
             document.getElementById('actionPercent').textContent = `${pct}%`;
             document.getElementById('actionBar').style.width = `${pct}%`;
 
-            // 100%ならお祝い演出
             if (pct === 100) {
                 celebrate();
             }
         }
 
-        // ★新機能：お祝い演出（紙吹雪＋音）
         function celebrate() {
-            // 紙吹雪（confetti）
             if (typeof confetti === 'function') {
                 const duration = 2000;
                 const end = Date.now() + duration;
 
                 (function frame() {
                     confetti({
-                        particleCount: 5,
-                        angle: 60,
-                        spread: 55,
-                        origin: { x: 0 },
+                        particleCount: 5, angle: 60, spread: 55, origin: { x: 0 },
                         colors: ['#667eea', '#764ba2', '#ffeb3b']
                     });
                     confetti({
-                        particleCount: 5,
-                        angle: 120,
-                        spread: 55,
-                        origin: { x: 1 },
+                        particleCount: 5, angle: 120, spread: 55, origin: { x: 1 },
                         colors: ['#667eea', '#764ba2', '#ffeb3b']
                     });
 
@@ -757,8 +755,6 @@
                     }
                 }());
             }
-
-            // Web Audio API による効果音生成（外部ファイル不要）
             playCelebrationSound();
         }
 
@@ -766,24 +762,17 @@
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (!AudioContext) return;
             const ctx = new AudioContext();
-
-            // 「チャララン！」というアルペジオ音を生成
-            // C5, E5, G5, C6 の和音構成
             const notes = [523.25, 659.25, 783.99, 1046.50];
             
             notes.forEach((freq, i) => {
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
-                
-                osc.type = 'triangle'; // 柔らかくキラキラした音色
+                osc.type = 'triangle';
                 osc.frequency.value = freq;
-                
                 osc.connect(gain);
                 gain.connect(ctx.destination);
                 
-                const startTime = ctx.currentTime + (i * 0.05); // 少しずつずらす
-                
-                // 音量エンベロープ（減衰）
+                const startTime = ctx.currentTime + (i * 0.05);
                 gain.gain.setValueAtTime(0, startTime);
                 gain.gain.linearRampToValueAtTime(0.1, startTime + 0.01);
                 gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
