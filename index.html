@@ -1,816 +1,1388 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>キャリア診断ツール | 株式会社コトラ</title>
-    
+
     <!-- PWA設定 -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="キャリア診断">
-    <link rel="apple-touch-icon" href="icon-192.png">
-    <meta name="theme-color" content="#f5f7fa">
+    <link rel="manifest" href="manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="キャリア診断" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
+    <meta name="theme-color" content="#f5f7fa" />
 
     <!-- 紙吹雪用ライブラリ (CDN) -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
-        /* --- アニメーション変数の定義 --- */
-        :root {
-            --ease-out-quint: cubic-bezier(0.23, 1, 0.32, 1);
-            --ease-elastic: cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
+      /* --- アニメーション変数の定義 --- */
+      :root {
+        --ease-out-quint: cubic-bezier(0.23, 1, 0.32, 1);
+        --ease-elastic: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
 
-        /* 基本スタイル */
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
-            line-height: 1.6; color: #333;
-            background: #f5f7fa;
-            min-height: 100vh; padding: 20px;
-            overflow-x: hidden;
-        }
-        .container { max-width: 600px; margin: 0 auto; position: relative; min-height: 100vh; }
-        
-        /* ヘッダー */
-        header { 
-            background: rgba(255,255,255,0.9); backdrop-filter: blur(10px);
-            padding: 15px; margin-bottom: 20px; border-radius: 16px; 
-            text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-            position: sticky; top: 10px; z-index: 100;
-            display: flex; justify-content: center; align-items: center;
-            height: 70px; 
-        }
-        
-        header img { 
-            height: 32px; 
-            width: auto;
-            max-width: 100%;
-            object-fit: contain; 
-            display: block; 
-        }
+      /* 基本スタイル */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Helvetica Neue",
+          "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: #f5f7fa;
+        min-height: 100vh;
+        padding: 20px;
+        overflow-x: hidden;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        position: relative;
+        min-height: 100vh;
+      }
 
-        /* カードデザイン */
-        .card {
-            background: #fff; border-radius: 20px; padding: 30px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.08); margin-bottom: 30px;
-            position: relative; overflow: hidden;
-            transition: height 0.3s var(--ease-out-quint);
+      /* ヘッダー */
+      header {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 16px;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        position: sticky;
+        top: 10px;
+        z-index: 100;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 70px;
+      }
+
+      header img {
+        height: 32px;
+        width: auto;
+        max-width: 100%;
+        object-fit: contain;
+        display: block;
+      }
+
+      /* カードデザイン */
+      .card {
+        background: #fff;
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+        margin-bottom: 30px;
+        position: relative;
+        overflow: hidden;
+        transition: height 0.3s var(--ease-out-quint);
+      }
+      h2 {
+        color: #003d7a;
+        font-size: 24px;
+        margin-bottom: 20px;
+        text-align: center;
+        font-weight: 800;
+      }
+
+      /* --- マイクロインタラクション --- */
+      .btn,
+      .btn-nav,
+      .option,
+      .todo-item,
+      .register-btn {
+        transition:
+          all 0.2s var(--ease-out-quint),
+          transform 0.1s var(--ease-out-quint);
+        cursor: pointer;
+      }
+      .btn:active,
+      .btn-nav:active,
+      .option:active,
+      .todo-item:active,
+      .register-btn:active {
+        transform: scale(0.96) !important;
+        opacity: 0.9;
+      }
+
+      /* メインボタン */
+      .btn {
+        display: block;
+        width: 100%;
+        padding: 18px;
+        background: var(--primary-gradient);
+        color: #fff;
+        text-align: center;
+        border-radius: 50px;
+        font-size: 18px;
+        font-weight: bold;
+        border: none;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      }
+      .btn:hover {
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        transform: translateY(-2px);
+      }
+
+      /* リピーターセクション */
+      .welcome-back-section {
+        background: #f0f7ff;
+        border: 2px solid #667eea;
+        border-radius: 16px;
+        padding: 25px;
+        text-align: center;
+        margin-bottom: 20px;
+        animation: popIn 0.5s var(--ease-elastic);
+      }
+      @keyframes popIn {
+        from {
+          transform: scale(0.9);
+          opacity: 0;
         }
-        h2 { color: #003d7a; font-size: 24px; margin-bottom: 20px; text-align: center; font-weight: 800; }
-        
-        /* --- マイクロインタラクション --- */
-        .btn, .btn-nav, .option, .todo-item, .register-btn {
-            transition: all 0.2s var(--ease-out-quint), transform 0.1s var(--ease-out-quint);
-            cursor: pointer;
+        to {
+          transform: scale(1);
+          opacity: 1;
         }
-        .btn:active, .btn-nav:active, .option:active, .todo-item:active, .register-btn:active {
-            transform: scale(0.96) !important; opacity: 0.9;
+      }
+
+      .btn-secondary {
+        background: #fff;
+        color: #666;
+        border: 2px solid #e0e0e0;
+        box-shadow: none;
+        margin-top: 15px;
+        font-size: 15px;
+        padding: 15px;
+      }
+
+      /* --- 画面遷移アニメーション --- */
+      .page {
+        display: none;
+        width: 100%;
+      }
+      .page.active {
+        display: block;
+      }
+
+      .slide-in-right {
+        animation: slideInRight 0.5s var(--ease-out-quint) forwards;
+      }
+      @keyframes slideInRight {
+        from {
+          opacity: 0;
+          transform: translateX(30px) scale(0.95);
         }
-
-        /* メインボタン */
-        .btn {
-            display: block; width: 100%; padding: 18px;
-            background: var(--primary-gradient);
-            color: #fff; text-align: center; border-radius: 50px;
-            font-size: 18px; font-weight: bold; border: none;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        to {
+          opacity: 1;
+          transform: translateX(0) scale(1);
         }
-        .btn:hover { box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5); transform: translateY(-2px); }
+      }
 
-        /* リピーターセクション */
-        .welcome-back-section {
-            background: #f0f7ff; border: 2px solid #667eea; border-radius: 16px;
-            padding: 25px; text-align: center; margin-bottom: 20px;
-            animation: popIn 0.5s var(--ease-elastic);
+      /* 質問カード遷移 */
+      .question-wrapper {
+        position: relative;
+      }
+      .question-content {
+        transition: opacity 0.3s ease;
+      }
+
+      .fade-out-left {
+        animation: fadeOutLeft 0.3s var(--ease-out-quint) forwards;
+      }
+      @keyframes fadeOutLeft {
+        to {
+          opacity: 0;
+          transform: translateX(-30px);
         }
-        @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+      }
 
-        .btn-secondary {
-            background: #fff; color: #666; border: 2px solid #e0e0e0;
-            box-shadow: none; margin-top: 15px; font-size: 15px; padding: 15px;
+      .fade-in-right {
+        animation: fadeInRight 0.4s var(--ease-out-quint) forwards;
+      }
+      @keyframes fadeInRight {
+        from {
+          opacity: 0;
+          transform: translateX(30px);
         }
-
-        /* --- 画面遷移アニメーション --- */
-        .page { display: none; width: 100%; }
-        .page.active { display: block; }
-
-        .slide-in-right { animation: slideInRight 0.5s var(--ease-out-quint) forwards; }
-        @keyframes slideInRight {
-            from { opacity: 0; transform: translateX(30px) scale(0.95); }
-            to { opacity: 1; transform: translateX(0) scale(1); }
+        to {
+          opacity: 1;
+          transform: translateX(0);
         }
+      }
 
-        /* 質問カード遷移 */
-        .question-wrapper { position: relative; }
-        .question-content { transition: opacity 0.3s ease; }
-        
-        .fade-out-left { animation: fadeOutLeft 0.3s var(--ease-out-quint) forwards; }
-        @keyframes fadeOutLeft { to { opacity: 0; transform: translateX(-30px); } }
-        
-        .fade-in-right { animation: fadeInRight 0.4s var(--ease-out-quint) forwards; }
-        @keyframes fadeInRight {
-            from { opacity: 0; transform: translateX(30px); }
-            to { opacity: 1; transform: translateX(0); }
+      /* プログレスバー */
+      .progress-container {
+        margin-bottom: 30px;
+      }
+      .progress-bar {
+        width: 100%;
+        height: 6px;
+        background: #eee;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 8px;
+      }
+      .progress-fill {
+        height: 100%;
+        background: var(--primary-gradient);
+        width: 0%;
+        transition: width 0.6s var(--ease-out-quint);
+      }
+
+      /* 選択肢 */
+      .option {
+        display: flex;
+        align-items: center;
+        padding: 16px 20px;
+        background: #f8f9fa;
+        border: 2px solid transparent;
+        border-radius: 12px;
+        margin-bottom: 12px;
+      }
+      .option.selected {
+        background: #eef2ff;
+        border-color: #667eea;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+      }
+      .option input {
+        margin-right: 15px;
+        transform: scale(1.3);
+        accent-color: #667eea;
+      }
+      .option span {
+        font-weight: 500;
+        font-size: 16px;
+      }
+
+      /* ナビゲーションボタン */
+      .navigation-buttons {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+      }
+      .btn-nav {
+        flex: 1;
+        padding: 15px;
+        background: #fff;
+        color: #667eea;
+        border: 2px solid #667eea;
+        border-radius: 50px;
+        font-weight: bold;
+        font-size: 16px;
+      }
+      .btn-nav:disabled {
+        opacity: 0.3;
+        cursor: default;
+        transform: none !important;
+      }
+      .btn-nav:hover:not(:disabled) {
+        background: #eef2ff;
+      }
+      #nextBtn {
+        background: #667eea;
+        color: #fff;
+      }
+      #nextBtn:hover {
+        background: #5a6fd6;
+      }
+
+      /* 結果画面演出 */
+      .stagger-item {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      .stagger-visible {
+        animation: fadeInUp 0.6s var(--ease-out-quint) forwards;
+      }
+      @keyframes fadeInUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
         }
+      }
 
-        /* プログレスバー */
-        .progress-container { margin-bottom: 30px; }
-        .progress-bar { width: 100%; height: 6px; background: #eee; border-radius: 10px; overflow: hidden; margin-bottom: 8px; }
-        .progress-fill { height: 100%; background: var(--primary-gradient); width: 0%; transition: width 0.6s var(--ease-out-quint); }
-        
-        /* 選択肢 */
-        .option { 
-            display: flex; align-items: center; padding: 16px 20px; 
-            background: #f8f9fa; border: 2px solid transparent; border-radius: 12px; 
-            margin-bottom: 12px;
-        }
-        .option.selected { 
-            background: #eef2ff; border-color: #667eea; 
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15); 
-        }
-        .option input { margin-right: 15px; transform: scale(1.3); accent-color: #667eea; }
-        .option span { font-weight: 500; font-size: 16px; }
+      .result-preview {
+        text-align: center;
+        padding: 30px 20px;
+        background: linear-gradient(180deg, #fff 0%, #fff8f0 100%);
+        border-radius: 16px;
+        margin: 20px 0;
+        border: 2px solid #ffeeba;
+      }
+      .result-type {
+        font-size: 28px;
+        font-weight: 800;
+        color: #d35400;
+        margin: 15px 0;
+        line-height: 1.3;
+      }
 
-        /* ナビゲーションボタン */
-        .navigation-buttons { display: flex; gap: 15px; margin-top: 30px; }
-        .btn-nav { 
-            flex: 1; padding: 15px; background: #fff; color: #667eea; 
-            border: 2px solid #667eea; border-radius: 50px; font-weight: bold; font-size: 16px;
-        }
-        .btn-nav:disabled { opacity: 0.3; cursor: default; transform: none !important; }
-        .btn-nav:hover:not(:disabled) { background: #eef2ff; }
-        #nextBtn { background: #667eea; color: #fff; }
-        #nextBtn:hover { background: #5a6fd6; }
+      /* ToDoリスト */
+      .todo-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 15px;
+        margin-bottom: 12px;
+        border: 1px solid #eee;
+        border-radius: 12px;
+        background-color: #fff;
+        line-height: 1.6;
+      }
+      .todo-item.completed {
+        background-color: #f0fdf4;
+        border-color: #86efac;
+      }
+      .todo-checkbox {
+        margin-top: 4px;
+        margin-right: 12px;
+        min-width: 20px;
+        height: 20px;
+        accent-color: #22c55e;
+        cursor: pointer;
+      }
+      .todo-item strong {
+        color: #003d7a;
+        font-weight: 700;
+        display: block;
+        margin-bottom: 4px;
+      }
+      .todo-item span {
+        font-size: 14px;
+        color: #444;
+      }
 
-        /* 結果画面演出 */
-        .stagger-item { opacity: 0; transform: translateY(20px); }
-        .stagger-visible { animation: fadeInUp 0.6s var(--ease-out-quint) forwards; }
-        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+      .todo-progress-area {
+        padding: 20px;
+        background: #f8fafc;
+        border-radius: 12px;
+        margin-bottom: 20px;
+      }
+      .todo-progress-bar-bg {
+        height: 12px;
+        background: #e2e8f0;
+        border-radius: 6px;
+        overflow: hidden;
+        margin-top: 8px;
+      }
+      .todo-progress-bar-fill {
+        height: 100%;
+        background: #22c55e;
+        width: 0%;
+        transition: width 1s var(--ease-out-quint);
+      }
 
-        .result-preview { 
-            text-align: center; padding: 30px 20px; 
-            background: linear-gradient(180deg, #fff 0%, #fff8f0 100%); 
-            border-radius: 16px; margin: 20px 0; 
-            border: 2px solid #ffeeba; 
-        }
-        .result-type { font-size: 28px; font-weight: 800; color: #d35400; margin: 15px 0; line-height: 1.3; }
+      /* 詳細レポートスタイル */
+      .detail-report {
+        display: none;
+        margin-top: 30px;
+      }
+      .detail-subtitle {
+        text-align: center;
+        font-size: 15px;
+        color: #667eea;
+        font-weight: bold;
+        margin-bottom: 25px;
+      }
+      .report-section-title {
+        color: #003d7a;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 10px;
+        margin-bottom: 15px;
+        font-size: 18px;
+        font-weight: bold;
+      }
 
-        /* ToDoリスト */
-        .todo-item {
-            display: flex; align-items: flex-start; padding: 15px;
-            margin-bottom: 12px; border: 1px solid #eee; border-radius: 12px;
-            background-color: #fff; line-height: 1.6;
-        }
-        .todo-item.completed { background-color: #f0fdf4; border-color: #86efac; }
-        .todo-checkbox { margin-top: 4px; margin-right: 12px; min-width: 20px; height: 20px; accent-color: #22c55e; cursor: pointer; }
-        .todo-item strong { color: #003d7a; font-weight: 700; display: block; margin-bottom: 4px; }
-        .todo-item span { font-size: 14px; color: #444; }
+      /* ロードマップ用リスト */
+      .roadmap-list {
+        list-style: none;
+        padding: 0;
+        margin-left: 5px;
+      }
+      .roadmap-list li {
+        margin-bottom: 12px;
+        color: #444;
+        padding-left: 25px;
+        position: relative;
+        font-weight: 500;
+      }
+      .roadmap-list li::before {
+        content: "📍";
+        position: absolute;
+        left: 0;
+        top: 0;
+      }
 
-        .todo-progress-area { padding: 20px; background: #f8fafc; border-radius: 12px; margin-bottom: 20px; }
-        .todo-progress-bar-bg { height: 12px; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin-top: 8px; }
-        .todo-progress-bar-fill { height: 100%; background: #22c55e; width: 0%; transition: width 1s var(--ease-out-quint); }
+      .register-btn {
+        text-decoration: none;
+        display: block;
+        padding: 18px;
+        background: var(--primary-gradient);
+        color: #fff;
+        border-radius: 50px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 16px;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      }
+      .register-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+      }
 
-        /* 詳細レポートスタイル */
-        .detail-report { display: none; margin-top: 30px; }
-        .detail-subtitle { text-align: center; font-size: 15px; color: #667eea; font-weight: bold; margin-bottom: 25px; }
-        .report-section-title { 
-            color:#003d7a; border-bottom:2px solid #eee; padding-bottom:10px; margin-bottom:15px; 
-            font-size: 18px; font-weight: bold;
-        }
-
-        /* ロードマップ用リスト */
-        .roadmap-list { list-style: none; padding: 0; margin-left: 5px; }
-        .roadmap-list li { margin-bottom: 12px; color: #444; padding-left: 25px; position: relative; font-weight: 500; }
-        .roadmap-list li::before { content: "📍"; position: absolute; left: 0; top: 0; }
-
-        .register-btn { 
-            text-decoration: none; display: block; padding: 18px; 
-            background: var(--primary-gradient); color: #fff; border-radius: 50px; 
-            text-align: center; font-weight: bold; font-size: 16px;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        }
-        .register-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5); }
-
-        footer { text-align: center; margin-top: 40px; color: #999; font-size: 12px; padding-bottom: 20px;}
+      footer {
+        text-align: center;
+        margin-top: 40px;
+        color: #999;
+        font-size: 12px;
+        padding-bottom: 20px;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <header>
-            <img src="logo.png" alt="KOTORA" width="140" height="32">
-        </header>
+      <header>
+        <img src="logo.png" alt="KOTORA" width="140" height="32" />
+      </header>
 
-        <!-- スタート画面 -->
-        <div id="page-start" class="page active">
-            <div class="card">
-                <h2>🎯 キャリア診断</h2>
-                
-                <div id="welcomeSection" class="welcome-back-section" style="display:none;">
-                    <p style="font-size:14px; color:#003d7a; font-weight:bold;">おかえりなさい</p>
-                    <div style="font-size:13px; color:#666; margin:10px 0;">
-                        前回: <span id="lastDate"></span>
-                    </div>
-                    <div class="result-type" id="lastResultType" style="font-size:20px; margin:5px 0;"></div>
-                    <button class="btn" id="resumeBtn" style="margin-top:15px;">前回の続きを見る</button>
-                    <button class="btn btn-secondary" id="restartBtn">新しく診断する</button>
-                </div>
+      <!-- スタート画面 -->
+      <div id="page-start" class="page active">
+        <div class="card">
+          <h2>🎯 キャリア診断</h2>
 
-                <div id="introSection">
-                    <div style="text-align: center; margin-bottom: 30px; color: #666; font-size: 15px;">
-                        <p>8つの質問であなたの強みを分析。</p>
-                        <p>市場価値を最大化する戦略をご提案します。</p>
-                    </div>
-                    <button class="btn" id="startBtn">診断をはじめる</button>
-                </div>
+          <div
+            id="welcomeSection"
+            class="welcome-back-section"
+            style="display: none"
+          >
+            <p style="font-size: 14px; color: #003d7a; font-weight: bold">
+              おかえりなさい
+            </p>
+            <div style="font-size: 13px; color: #666; margin: 10px 0">
+              前回: <span id="lastDate"></span>
             </div>
-        </div>
+            <div
+              class="result-type"
+              id="lastResultType"
+              style="font-size: 20px; margin: 5px 0"
+            ></div>
+            <button class="btn" id="resumeBtn" style="margin-top: 15px">
+              前回の続きを見る
+            </button>
+            <button class="btn btn-secondary" id="restartBtn">
+              新しく診断する
+            </button>
+          </div>
 
-        <!-- 質問画面 -->
-        <div id="page-questions" class="page">
-            <div class="card">
-                <div class="progress-container">
-                    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-                    <div style="text-align: center; font-size: 12px; color: #999; font-weight:bold;" id="progressText">Q1 / 8</div>
-                </div>
-                
-                <div class="question-wrapper">
-                    <div id="questionContainer" class="question-content"></div>
-                </div>
-
-                <div class="navigation-buttons">
-                    <button class="btn-nav" id="prevBtn" disabled>戻る</button>
-                    <button class="btn-nav" id="nextBtn">次へ</button>
-                </div>
+          <div id="introSection">
+            <div
+              style="
+                text-align: center;
+                margin-bottom: 30px;
+                color: #666;
+                font-size: 15px;
+              "
+            >
+              <p>8つの質問であなたの強みを分析。</p>
+              <p>市場価値を最大化する戦略をご提案します。</p>
             </div>
+            <button class="btn" id="startBtn">診断をはじめる</button>
+          </div>
         </div>
+      </div>
 
-        <!-- 結果画面 -->
-        <div id="page-results" class="page">
-            <div class="card">
-                <div id="resultContent">
-                    <h2 class="stagger-item">✨ 診断結果</h2>
-                    
-                    <div class="result-preview stagger-item" style="animation-delay: 0.1s;">
-                        <p style="color: #666; font-size:14px;">あなたのキャリアタイプ</p>
-                        <div class="result-type" id="resultType">...</div>
-                        <p id="resultDescription" style="line-height: 1.6; color: #555; font-size:14px; margin-top: 10px;"></p>
-                    </div>
-                    
-                    <div class="stagger-item" style="animation-delay: 0.2s; margin-top:20px;">
-                        <a href="https://www.kotora.jp/service/tenshoku_entry.php?utm_source=tool&utm_medium=tool&utm_campaign=note_carrierdiagnostictool" class="register-btn" target="_blank">詳細な情報収集を始める</a>
-                        <p style="text-align:center; font-size:12px; color:#999; margin-top:8px;">コトラ公式サイトへ移動します</p>
-                    </div>
-
-                    <div id="detailReport" class="detail-report">
-                        <!-- サブタイトル -->
-                        <div class="stagger-item" style="animation-delay: 0.25s;">
-                            <p id="detailSubtitle" class="detail-subtitle"></p>
-                        </div>
-
-                        <!-- 市場価値 -->
-                        <div class="stagger-item" style="animation-delay: 0.3s;">
-                            <h3 class="report-section-title">📈 市場価値</h3>
-                            <p id="marketValue" style="font-size:14px; color:#444;"></p>
-                        </div>
-
-                        <!-- アクションリスト -->
-                        <div class="stagger-item" style="animation-delay: 0.4s; margin-top:30px;">
-                            <h3 class="report-section-title">🚀 ネクスト・アクション</h3>
-                            <div class="todo-progress-area">
-                                <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px; color:#003d7a;">
-                                    <span>達成度</span>
-                                    <span id="actionPercent">0%</span>
-                                </div>
-                                <div class="todo-progress-bar-bg">
-                                    <div id="actionBar" class="todo-progress-bar-fill"></div>
-                                </div>
-                            </div>
-                            <div id="nextActions"></div>
-                        </div>
-
-                        <!-- ロードマップ -->
-                        <div class="stagger-item" style="animation-delay: 0.5s; margin-top:30px;">
-                            <h3 class="report-section-title">🗺 キャリアロードマップ</h3>
-                            <ul id="roadmap" class="roadmap-list"></ul>
-                        </div>
-
-                        <!-- ワンポイント -->
-                        <div class="stagger-item" style="animation-delay: 0.6s; margin-top:30px;">
-                            <h3 class="report-section-title">💡 コトラからのワンポイント</h3>
-                            <p id="onepoint" style="font-size:14px; color:#444; background:#f0f7ff; padding:15px; border-radius:8px; border:1px solid #d0e1f5;"></p>
-                        </div>
-
-                        <!-- 下部登録ボタン -->
-                        <div class="stagger-item" style="animation-delay: 0.7s; margin-top:40px;">
-                            <p class="register-microcopy" style="text-align:center; font-size:14px; color:#666; margin-bottom:10px;">検討が進みやすくなります</p>
-                            <a href="https://www.kotora.jp/service/tenshoku_entry.php?utm_source=tool&utm_medium=tool&utm_campaign=note_carrierdiagnostictool" class="register-btn" target="_blank">無料で登録して、情報収集を始める</a>
-                        </div>
-                        
-                        <div class="stagger-item" style="animation-delay: 0.8s; margin-top:30px; text-align:center;">
-                            <button class="btn-nav" id="retryBtn" style="width:auto; padding:10px 30px;">タイトルへ戻る</button>
-                        </div>
-                    </div>
-                </div>
+      <!-- 質問画面 -->
+      <div id="page-questions" class="page">
+        <div class="card">
+          <div class="progress-container">
+            <div class="progress-bar">
+              <div class="progress-fill" id="progressFill"></div>
             </div>
-        </div>
+            <div
+              style="
+                text-align: center;
+                font-size: 12px;
+                color: #999;
+                font-weight: bold;
+              "
+              id="progressText"
+            >
+              Q1 / 8
+            </div>
+          </div>
 
-        <footer>
-            <p>&copy; 2026 KOTORA Co., Ltd.</p>
-        </footer>
+          <div class="question-wrapper">
+            <div id="questionContainer" class="question-content"></div>
+          </div>
+
+          <div class="navigation-buttons">
+            <button class="btn-nav" id="prevBtn" disabled>戻る</button>
+            <button class="btn-nav" id="nextBtn">次へ</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 結果画面 -->
+      <div id="page-results" class="page">
+        <div class="card">
+          <div id="resultContent">
+            <h2 class="stagger-item">✨ 診断結果</h2>
+
+            <div
+              class="result-preview stagger-item"
+              style="animation-delay: 0.1s"
+            >
+              <p style="color: #666; font-size: 14px">あなたのキャリアタイプ</p>
+              <div class="result-type" id="resultType">...</div>
+              <p
+                id="resultDescription"
+                style="
+                  line-height: 1.6;
+                  color: #555;
+                  font-size: 14px;
+                  margin-top: 10px;
+                "
+              ></p>
+            </div>
+
+            <div
+              class="stagger-item"
+              style="animation-delay: 0.2s; margin-top: 20px"
+            >
+              <a
+                href="https://www.kotora.jp/service/tenshoku_entry.php?utm_source=tool&utm_medium=tool&utm_campaign=note_carrierdiagnostictool"
+                class="register-btn"
+                target="_blank"
+                >詳細な情報収集を始める</a
+              >
+              <p
+                style="
+                  text-align: center;
+                  font-size: 12px;
+                  color: #999;
+                  margin-top: 8px;
+                "
+              >
+                コトラ公式サイトへ移動します
+              </p>
+            </div>
+
+            <div id="detailReport" class="detail-report">
+              <!-- サブタイトル -->
+              <div class="stagger-item" style="animation-delay: 0.25s">
+                <p id="detailSubtitle" class="detail-subtitle"></p>
+              </div>
+
+              <!-- 市場価値 -->
+              <div class="stagger-item" style="animation-delay: 0.3s">
+                <h3 class="report-section-title">📈 市場価値</h3>
+                <p id="marketValue" style="font-size: 14px; color: #444"></p>
+              </div>
+
+              <!-- アクションリスト -->
+              <div
+                class="stagger-item"
+                style="animation-delay: 0.4s; margin-top: 30px"
+              >
+                <h3 class="report-section-title">🚀 ネクスト・アクション</h3>
+                <div class="todo-progress-area">
+                  <div
+                    style="
+                      display: flex;
+                      justify-content: space-between;
+                      font-weight: bold;
+                      font-size: 14px;
+                      color: #003d7a;
+                    "
+                  >
+                    <span>達成度</span>
+                    <span id="actionPercent">0%</span>
+                  </div>
+                  <div class="todo-progress-bar-bg">
+                    <div id="actionBar" class="todo-progress-bar-fill"></div>
+                  </div>
+                </div>
+                <div id="nextActions"></div>
+              </div>
+
+              <!-- ロードマップ -->
+              <div
+                class="stagger-item"
+                style="animation-delay: 0.5s; margin-top: 30px"
+              >
+                <h3 class="report-section-title">🗺 キャリアロードマップ</h3>
+                <ul id="roadmap" class="roadmap-list"></ul>
+              </div>
+
+              <!-- ワンポイント -->
+              <div
+                class="stagger-item"
+                style="animation-delay: 0.6s; margin-top: 30px"
+              >
+                <h3 class="report-section-title">
+                  💡 コトラからのワンポイント
+                </h3>
+                <p
+                  id="onepoint"
+                  style="
+                    font-size: 14px;
+                    color: #444;
+                    background: #f0f7ff;
+                    padding: 15px;
+                    border-radius: 8px;
+                    border: 1px solid #d0e1f5;
+                  "
+                ></p>
+              </div>
+
+              <!-- 下部登録ボタン -->
+              <div
+                class="stagger-item"
+                style="animation-delay: 0.7s; margin-top: 40px"
+              >
+                <p
+                  class="register-microcopy"
+                  style="
+                    text-align: center;
+                    font-size: 14px;
+                    color: #666;
+                    margin-bottom: 10px;
+                  "
+                >
+                  検討が進みやすくなります
+                </p>
+                <a
+                  href="https://www.kotora.jp/service/tenshoku_entry.php?utm_source=tool&utm_medium=tool&utm_campaign=note_carrierdiagnostictool"
+                  class="register-btn"
+                  target="_blank"
+                  >無料で登録して、情報収集を始める</a
+                >
+              </div>
+
+              <div
+                class="stagger-item"
+                style="
+                  animation-delay: 0.8s;
+                  margin-top: 30px;
+                  text-align: center;
+                "
+              >
+                <button
+                  class="btn-nav"
+                  id="retryBtn"
+                  style="width: auto; padding: 10px 30px"
+                >
+                  タイトルへ戻る
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <p>&copy; 2026 KOTORA Co., Ltd.</p>
+      </footer>
     </div>
 
     <script>
-        // --- Service Worker登録 ---
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
-        }
+      // --- Service Worker登録 ---
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () =>
+          navigator.serviceWorker.register("./sw.js"),
+        );
+      }
 
-        // --- データ定義 ---
-        const questions = [
-            { id: 1, text: "現在の職種に近いのは？", options: [
-                { text: "金融", scores: { finance: 3, analytical: 1 } },
-                { text: "不動産", scores: { realestate: 3, negotiation: 1 } },
-                { text: "コンサルティング", scores: { consulting: 3, strategy: 2 } },
-                { text: "IT / DXエンジニア", scores: { it: 3, technical: 2 } },
-                { text: "製造業", scores: { manufacturing: 3, specialist: 1 } },
-                { text: "経営幹部・管理系", scores: { leadership: 3, management: 2 } },
-                { text: "その他", scores: { versatility: 1 } }
-            ]},
-            { id: 2, text: "キャリアで重視することは？", options: [
-                { text: "専門性を深める", scores: { specialist: 3, technical: 2 } },
-                { text: "マネジメント・統率", scores: { leadership: 3, management: 2 } },
-                { text: "幅広い経験", scores: { generalist: 3, versatility: 2 } },
-                { text: "社会的インパクト", scores: { impact: 3, strategy: 2 } }
-            ]},
-            { id: 3, text: "やりがいを感じる瞬間は？", options: [
-                { text: "難問を論理的に解決", scores: { analytical: 3, problem_solving: 2 } },
-                { text: "チームで成果を出す", scores: { leadership: 3, teamwork: 2 } },
-                { text: "新しい仕組みを創る", scores: { strategy: 3, innovation: 2 } },
-                { text: "顧客に感謝される", scores: { communication: 3, client_focus: 2 } }
-            ]},
-            { id: 4, text: "最も得意なスキルは？", options: [
-                { text: "データ・定量分析", scores: { analytical: 3, technical: 2 } },
-                { text: "戦略立案・企画", scores: { strategy: 3, planning: 2 } },
-                { text: "対人折衝・交渉", scores: { communication: 3, negotiation: 2 } },
-                { text: "プロジェクト管理", scores: { management: 3, execution: 2 } }
-            ]},
-            { id: 5, text: "理想的な働き方は？", options: [
-                { text: "1つのテーマに没頭", scores: { specialist: 2, focus: 2 } },
-                { text: "複数を同時進行", scores: { versatility: 2, multitasking: 2 } },
-                { text: "チームで協力", scores: { teamwork: 3, collaboration: 2 } },
-                { text: "個人の裁量で自由", scores: { autonomy: 3, independence: 2 } }
-            ]},
-            { id: 6, text: "転職で実現したいことは？", options: [
-                { text: "年収アップ", scores: { ambition: 2, finance: 1 } },
-                { text: "昇進・キャリアアップ", scores: { leadership: 2, ambition: 3 } },
-                { text: "新スキル獲得", scores: { growth: 3, learning: 2 } },
-                { text: "ワークライフバランス", scores: { balance: 3, wellbeing: 2 } }
-            ]},
-            { id: 7, text: "興味のある企業タイプは？", type: "checkbox", options: [
-                { text: "外資系企業", scores: { global: 2, versatility: 1 } },
-                { text: "日系大手企業", scores: { corporate: 2, stability: 1 } },
-                { text: "ベンチャー", scores: { entrepreneurship: 2, innovation: 1 } },
-                { text: "コンサルファーム", scores: { consulting: 2, strategy: 1 } },
-                { text: "PEファンド・投資", scores: { finance: 2, analytical: 1 } },
-                { text: "事業会社（企画・DX）", scores: { management: 2, it: 1 } }
-            ]},
-            { id: 8, text: "5年後の理想像は？", options: [
-                { text: "エキスパートとして認知", scores: { specialist: 3, expertise: 3 } },
-                { text: "経営層として活躍", scores: { leadership: 3, management: 3 } },
-                { text: "起業・独立", scores: { entrepreneurship: 3, autonomy: 2 } },
-                { text: "グローバルに活躍", scores: { global: 3, versatility: 2 } }
-            ]}
-        ];
+      // --- データ定義 ---
+      const questions = [
+        {
+          id: 1,
+          text: "現在の職種に近いのは？",
+          options: [
+            { text: "金融", scores: { finance: 3, analytical: 1 } },
+            { text: "不動産", scores: { realestate: 3, negotiation: 1 } },
+            {
+              text: "コンサルティング",
+              scores: { consulting: 3, strategy: 2 },
+            },
+            { text: "IT / DXエンジニア", scores: { it: 3, technical: 2 } },
+            { text: "製造業", scores: { manufacturing: 3, specialist: 1 } },
+            {
+              text: "経営幹部・管理系",
+              scores: { leadership: 3, management: 2 },
+            },
+            { text: "その他", scores: { versatility: 1 } },
+          ],
+        },
+        {
+          id: 2,
+          text: "キャリアで重視することは？",
+          options: [
+            { text: "専門性を深める", scores: { specialist: 3, technical: 2 } },
+            {
+              text: "マネジメント・統率",
+              scores: { leadership: 3, management: 2 },
+            },
+            { text: "幅広い経験", scores: { generalist: 3, versatility: 2 } },
+            { text: "社会的インパクト", scores: { impact: 3, strategy: 2 } },
+          ],
+        },
+        {
+          id: 3,
+          text: "やりがいを感じる瞬間は？",
+          options: [
+            {
+              text: "難問を論理的に解決",
+              scores: { analytical: 3, problem_solving: 2 },
+            },
+            {
+              text: "チームで成果を出す",
+              scores: { leadership: 3, teamwork: 2 },
+            },
+            {
+              text: "新しい仕組みを創る",
+              scores: { strategy: 3, innovation: 2 },
+            },
+            {
+              text: "顧客に感謝される",
+              scores: { communication: 3, client_focus: 2 },
+            },
+          ],
+        },
+        {
+          id: 4,
+          text: "最も得意なスキルは？",
+          options: [
+            {
+              text: "データ・定量分析",
+              scores: { analytical: 3, technical: 2 },
+            },
+            { text: "戦略立案・企画", scores: { strategy: 3, planning: 2 } },
+            {
+              text: "対人折衝・交渉",
+              scores: { communication: 3, negotiation: 2 },
+            },
+            {
+              text: "プロジェクト管理",
+              scores: { management: 3, execution: 2 },
+            },
+          ],
+        },
+        {
+          id: 5,
+          text: "理想的な働き方は？",
+          options: [
+            { text: "1つのテーマに没頭", scores: { specialist: 2, focus: 2 } },
+            {
+              text: "複数を同時進行",
+              scores: { versatility: 2, multitasking: 2 },
+            },
+            { text: "チームで協力", scores: { teamwork: 3, collaboration: 2 } },
+            {
+              text: "個人の裁量で自由",
+              scores: { autonomy: 3, independence: 2 },
+            },
+          ],
+        },
+        {
+          id: 6,
+          text: "転職で実現したいことは？",
+          options: [
+            { text: "年収アップ", scores: { ambition: 2, finance: 1 } },
+            {
+              text: "昇進・キャリアアップ",
+              scores: { leadership: 2, ambition: 3 },
+            },
+            { text: "新スキル獲得", scores: { growth: 3, learning: 2 } },
+            {
+              text: "ワークライフバランス",
+              scores: { balance: 3, wellbeing: 2 },
+            },
+          ],
+        },
+        {
+          id: 7,
+          text: "興味のある企業タイプは？",
+          type: "checkbox",
+          options: [
+            { text: "外資系企業", scores: { global: 2, versatility: 1 } },
+            { text: "日系大手企業", scores: { corporate: 2, stability: 1 } },
+            {
+              text: "ベンチャー",
+              scores: { entrepreneurship: 2, innovation: 1 },
+            },
+            {
+              text: "コンサルファーム",
+              scores: { consulting: 2, strategy: 1 },
+            },
+            { text: "PEファンド・投資", scores: { finance: 2, analytical: 1 } },
+            { text: "事業会社（企画・DX）", scores: { management: 2, it: 1 } },
+          ],
+        },
+        {
+          id: 8,
+          text: "5年後の理想像は？",
+          options: [
+            {
+              text: "エキスパートとして認知",
+              scores: { specialist: 3, expertise: 3 },
+            },
+            {
+              text: "経営層として活躍",
+              scores: { leadership: 3, management: 3 },
+            },
+            {
+              text: "起業・独立",
+              scores: { entrepreneurship: 3, autonomy: 2 },
+            },
+            { text: "グローバルに活躍", scores: { global: 3, versatility: 2 } },
+          ],
+        },
+      ];
 
-        const TYPE_INFO = {
-            "戦略思考型リーダー": "戦略的思考力とリーダーシップを兼ね備えたタイプ。組織を率いて大きな成果を生み出すことが得意です。経営層やマネジメント職で真価を発揮できます。",
-            "金融スペシャリスト": "金融知識と分析力に優れたタイプ。高度な金融専門性が求められる分野で活躍できます。投資銀行、PEファンド、財務企画などが適職です。",
-            "コンサルティングプロフェッショナル": "戦略立案と問題解決に長けたタイプ。クライアントの経営課題を解決することに喜びを感じます。戦略コンサルやビジネスコンサルタントに最適です。",
-            "テクノロジー・DXリーダー": "技術力とイノベーション志向を持つタイプ。デジタル変革を推進し、事業成長に貢献できます。CTO、DX推進責任者、テックリードなどで活躍できます。",
-            "専門性追求型エキスパート": "特定領域の専門性を深めることに情熱を持つタイプ。その道のプロフェッショナルとして活躍します。専門職、スペシャリストポジションで強みを発揮できます。",
-            "クライアント志向型プロフェッショナル": "優れたコミュニケーション力と折衝力を持つタイプ。信頼関係を構築し最適な提案ができます。営業、アカウントマネジメント、カスタマーサクセスなどに向いています。",
-            "事業変革リーダー": "変革を推進する実行力を持つタイプ。新規事業やチャレンジャブルな環境で力を発揮します。スタートアップ、新規事業開発、事業再生などが適職です。",
-            "マルチタレント型ゼネラリスト": "幅広い知識とスキルを持ち、柔軟に対応できるタイプ。多様なプロジェクトで横断的に活躍します。事業企画、経営企画、プロジェクトマネージャーなどで強みを発揮できます。"
-        };
+      const TYPE_INFO = {
+        戦略思考型リーダー:
+          "戦略的思考力とリーダーシップを兼ね備えたタイプ。組織を率いて大きな成果を生み出すことが得意です。経営層やマネジメント職で真価を発揮できます。",
+        金融スペシャリスト:
+          "金融知識と分析力に優れたタイプ。高度な金融専門性が求められる分野で活躍できます。投資銀行、PEファンド、財務企画などが適職です。",
+        コンサルティングプロフェッショナル:
+          "戦略立案と問題解決に長けたタイプ。クライアントの経営課題を解決することに喜びを感じます。戦略コンサルやビジネスコンサルタントに最適です。",
+        "テクノロジー・DXリーダー":
+          "技術力とイノベーション志向を持つタイプ。デジタル変革を推進し、事業成長に貢献できます。CTO、DX推進責任者、テックリードなどで活躍できます。",
+        専門性追求型エキスパート:
+          "特定領域の専門性を深めることに情熱を持つタイプ。その道のプロフェッショナルとして活躍します。専門職、スペシャリストポジションで強みを発揮できます。",
+        クライアント志向型プロフェッショナル:
+          "優れたコミュニケーション力と折衝力を持つタイプ。信頼関係を構築し最適な提案ができます。営業、アカウントマネジメント、カスタマーサクセスなどに向いています。",
+        事業変革リーダー:
+          "変革を推進する実行力を持つタイプ。新規事業やチャレンジャブルな環境で力を発揮します。スタートアップ、新規事業開発、事業再生などが適職です。",
+        マルチタレント型ゼネラリスト:
+          "幅広い知識とスキルを持ち、柔軟に対応できるタイプ。多様なプロジェクトで横断的に活躍します。事業企画、経営企画、プロジェクトマネージャーなどで強みを発揮できます。",
+      };
 
-        const detailReports = {
-            "戦略思考型リーダー": {
-                subtitle: "〜組織を勝利に導く、経営の羅針盤〜",
-                marketValue: "不確実性の高い現代において、ファクトに基づき論理的に進むべき道を示せる人材は希少です。特に「人を動かすリーダーシップ」を兼ね備えている点で、CxO候補としての市場価値が非常に高い状態です。",
-                nextActions: [
-                    "<strong>[Lv.1] 「意思決定」の言語化</strong><br>チームに対して、結論だけでなく「なぜその判断に至ったか」の思考プロセスを共有する頻度を上げてください。",
-                    "<strong>[Lv.2] 非連続な成長の模索</strong><br>既存事業の延長線（改善）ではなく、全く新しい収益源やビジネスモデル（改革）を構想する時間を週に1時間は確保しましょう。",
-                    "<strong>[Lv.3] 反対意見の吸収</strong><br>自分の意見に反対しそうなメンバーと1対1で話し、懸念点を聞き出す時間を作ってください。"
-                ],
-                roadmap: ["事業責任者（Business Unit Head）", "CSO（最高戦略責任者）", "経営企画部長"],
-                onepoint: "面接では「戦略の美しさ」よりも「泥臭い実行フェーズで、抵抗勢力をどう説得したか」という人間的な調整力のエピソードが高く評価されます。"
-            },
-            "金融スペシャリスト": {
-                subtitle: "〜資本の流れを読み解き、企業価値を最大化する参謀〜",
-                marketValue: "数字という世界共通言語を操れるあなたは、どの業界でも重宝されます。特に「投資対効果（ROI）」や「ファイナンス戦略」視点を持っている場合、PEファンドやCFO候補として引く手あまたです。",
-                nextActions: [
-                    "<strong>[Lv.1] ビジネス理解の深化</strong><br>数字の裏側にある「現場のオペレーション」や「商流」を解像度高く理解するよう努めてください。",
-                    "<strong>[Lv.2] エクイティストーリーの構築</strong><br>自社やクライアント企業が「どうすれば株価（企業価値）が上がるか」を投資家目線で語る訓練をしましょう。",
-                    "<strong>[Lv.3] 分析レポート作成</strong><br>担当分野に関する分析レポートをA4・1枚で作成し、アウトプットする習慣をつけてください。"
-                ],
-                roadmap: ["CFO（最高財務責任者）", "PEファンド / ベンチャーキャピタリスト", "M&Aアドバイザリー"],
-                onepoint: "「守り（コンプライアンス・管理）」だけでなく、「攻め（資金調達・M&A・投資）」の経験を積める環境に身を置くことが、理想の年収アップを実現する鍵です。"
-            },
-            "コンサルティングプロフェッショナル": {
-                subtitle: "〜難問を解決し、クライアントに変革をもたらす知の巨人〜",
-                marketValue: "短期間で本質的な課題を特定し、解決策を提示するスキルは即戦力です。DXやサステナビリティなど正解のないテーマにおいて、あなたのスキルは特に輝きます。",
-                nextActions: [
-                    "<strong>[Lv.1] ロジックツリー分解</strong><br>今抱えている課題を1つ、ロジックツリーで分解し、構造化して考える癖をつけましょう。",
-                    "<strong>[Lv.2] 「実行」へのコミット</strong><br>絵に描いた餅（綺麗な資料）で終わらせず、現場が動けるレベルまで落とし込む「実行支援」のスキルを磨きましょう。",
-                    "<strong>[Lv.3] アカウントマネジメント力</strong><br>課題解決だけでなく、「あなたにまた頼みたい」と思わせる営業力・関係構築力を意識してください。"
-                ],
-                roadmap: ["コンサルティングファーム パートナー", "大手事業会社 経営企画室長", "PEファンド 投資先バリューアップ担当"],
-                onepoint: "事業会社への転職を目指す場合、「評論家」と見られないよう注意が必要です。「自ら手を動かし、泥をかぶった経験」を職務経歴書にどう盛り込むかが重要です。"
-            },
-            "テクノロジー・DXリーダー": {
-                subtitle: "〜技術とビジネスを融合させ、未来を実装する建築家〜",
-                marketValue: "「技術」と「ビジネス（利益）」を翻訳できる人材は極めて不足しています。経営層とエンジニアの共通言語を持つあなたは、現代企業の最重要人物です。",
-                nextActions: [
-                    "<strong>[Lv.1] PL（損益）感覚の養成</strong><br>導入するツールや開発するシステムが、どれだけのコスト削減や売上増に繋がるかを、常に金額で試算する癖をつけましょう。",
-                    "<strong>[Lv.2] 翻訳力の向上</strong><br>技術的な課題（技術的負債など）を、非エンジニア向けに専門用語なしで説明する文章を書いてみましょう。",
-                    "<strong>[Lv.3] 組織変革（チェンジマネジメント）</strong><br>システム導入時の現場の反発をどう抑え、定着させるか。「人」のマネジメントスキルを磨いてください。"
-                ],
-                roadmap: ["CTO（最高技術責任者） / CDO（最高デジタル責任者）", "VPoE（Vice President of Engineering）", "DX推進本部長"],
-                onepoint: "ハイクラス求人では、特定の言語スキルよりも「技術選定の理由」や「エンジニア組織の採用・評価制度の構築経験」が問われます。"
-            },
-            "専門性追求型エキスパート": {
-                subtitle: "〜特定の領域を極め、代替不可能な価値を提供する職人〜",
-                marketValue: "「この分野なら〇〇さん」という第一人者ポジションは景気変動に強く、独立も可能です。知識の深さがそのまま他者の参入障壁（防御力）になります。",
-                nextActions: [
-                    "<strong>[Lv.1] 最新情報のキャッチアップ</strong><br>自分の専門分野のキーワードで検索し、最新ニュースや論文を1つ読みましょう。",
-                    "<strong>[Lv.2] 社外発信とネットワーキング</strong><br>社内だけでなく、業界団体やセミナー登壇、執筆などを通じて「個人の名前」でブランドを作ってください。",
-                    "<strong>[Lv.3] 周辺領域への染み出し</strong><br>専門知識を、隣接するビジネス領域（例：法務ならビジネス開発）とどう絡めるか意識してみましょう。"
-                ],
-                roadmap: ["専門役員（CLO、CISOなど）", "特定領域の技術顧問 / 独立コンサルタント", "研究開発部門のトップ"],
-                onepoint: "専門用語を並べるのではなく、専門外の人（経営者）に対して「リスクとリターン」を平易な言葉で説明できる能力が、報酬アップの決め手になります。"
-            },
-            "クライアント志向型プロフェッショナル": {
-                subtitle: "〜顧客の心を掴み、信頼を収益に変えるトップランナー〜",
-                marketValue: "AIが進化しても、高度な「交渉」や「信頼構築」は人間にしかできません。無形商材や高額商材における折衝力は、どんなビジネスでも収益の柱です。",
-                nextActions: [
-                    "<strong>[Lv.1] 顧客情報の収集</strong><br>重要顧客の最新プレスリリースや決算資料を読み、顧客の経営状況を把握しましょう。",
-                    "<strong>[Lv.2] ソリューション提案力</strong><br>御用聞き営業から脱却し、顧客自身も気づいていない「真の課題（インサイト）」を提示するスタイルを確立しましょう。",
-                    "<strong>[Lv.3] 経営視点の獲得</strong><br>クライアントの担当者だけでなく、決裁者（役員クラス）と対等にビジネスの話ができるよう、数字を読み込んでください。"
-                ],
-                roadmap: ["営業本部長 / CRO（最高収益責任者）", "カントリーマネージャー（外資系）", "カスタマーサクセス責任者"],
-                onepoint: "「売上数字」は当然ですが、「再現性のある営業プロセスの構築」や「若手の育成手法」を言語化できていると、マネジメント職としての評価が跳ね上がります。"
-            },
-            "事業変革リーダー": {
-                subtitle: "〜混沌を恐れず、ゼロからイチを生み出す開拓者〜",
-                marketValue: "新規事業や組織急拡大など、カオスな状況を楽しめる人材は貴重です。整っていない環境で自走し道を作る力は、イノベーション部門で最も求められます。",
-                nextActions: [
-                    "<strong>[Lv.1] ゼロベース思考</strong><br>「もし今の事業が明日なくなったら何をするか」を1つ考え、メモに残しましょう。",
-                    "<strong>[Lv.2] 仮説検証の高速化</strong><br>完璧な計画を立てるより、小さなプロトタイプを市場に出してフィードバックを得るサイクル（PDCA）を高速化させてください。",
-                    "<strong>[Lv.3] 「撤退」の基準作り</strong><br>攻めるだけでなく、ダメな時にどこで損切りするかという、冷徹な判断軸を持つ訓練をしましょう。"
-                ],
-                roadmap: ["起業家 / CEO", "新規事業開発室長", "事業再生マネージャー"],
-                onepoint: "失敗経験こそが資産です。「なぜ失敗したか」「次にどう活かすか」を深く内省し語れる人は、投資家や経営陣から深い信頼を得られます。"
-            },
-            "マルチタレント型ゼネラリスト": {
-                subtitle: "〜あらゆるピースを繋ぎ合わせ、組織を機能させる万能の接着剤〜",
-                marketValue: "変化の激しい現代では「全体最適化のプロ」として再評価されています。部門間の壁を取り払いプロジェクトを進める力は、COOや社長室長として重要です。",
-                nextActions: [
-                    "<strong>[Lv.1] コネクションの可視化</strong><br>自分が繋げられそうな「部署と部署」や「人と人」を書き出してみましょう。",
-                    "<strong>[Lv.2] プロジェクトマネジメント（PM）の体系化</strong><br>自分の調整力を、PMBOKなどのフレームワークと照らし合わせ、「属人的なスキル」から「体系的な手法」へ昇華させてください。",
-                    "<strong>[Lv.3] 「翻訳者」としてのポジショニング</strong><br>営業と開発、経営と現場など、言葉が通じにくい部署の間に入り、通訳として機能する実績を作りましょう。"
-                ],
-                roadmap: ["COO（最高執行責任者）", "Chief of Staff（経営企画・社長室長）", "大規模プロジェクトマネージャー"],
-                onepoint: "「何でもできます」は「何もできません」と取られるリスクがあります。「私は、複雑な利害関係を調整し、プロジェクトを完遂させるプロです」と、機能（Function）としての強みを定義してください。"
-            }
-        };
+      const detailReports = {
+        戦略思考型リーダー: {
+          subtitle: "〜組織を勝利に導く、経営の羅針盤〜",
+          marketValue:
+            "不確実性の高い現代において、ファクトに基づき論理的に進むべき道を示せる人材は希少です。特に「人を動かすリーダーシップ」を兼ね備えている点で、CxO候補としての市場価値が非常に高い状態です。",
+          nextActions: [
+            "<strong>[Lv.1] 「意思決定」の言語化</strong><br>チームに対して、結論だけでなく「なぜその判断に至ったか」の思考プロセスを共有する頻度を上げてください。",
+            "<strong>[Lv.2] 非連続な成長の模索</strong><br>既存事業の延長線（改善）ではなく、全く新しい収益源やビジネスモデル（改革）を構想する時間を週に1時間は確保しましょう。",
+            "<strong>[Lv.3] 反対意見の吸収</strong><br>自分の意見に反対しそうなメンバーと1対1で話し、懸念点を聞き出す時間を作ってください。",
+          ],
+          roadmap: [
+            "事業責任者（Business Unit Head）",
+            "CSO（最高戦略責任者）",
+            "経営企画部長",
+          ],
+          onepoint:
+            "面接では「戦略の美しさ」よりも「泥臭い実行フェーズで、抵抗勢力をどう説得したか」という人間的な調整力のエピソードが高く評価されます。",
+        },
+        金融スペシャリスト: {
+          subtitle: "〜資本の流れを読み解き、企業価値を最大化する参謀〜",
+          marketValue:
+            "数字という世界共通言語を操れるあなたは、どの業界でも重宝されます。特に「投資対効果（ROI）」や「ファイナンス戦略」視点を持っている場合、PEファンドやCFO候補として引く手あまたです。",
+          nextActions: [
+            "<strong>[Lv.1] ビジネス理解の深化</strong><br>数字の裏側にある「現場のオペレーション」や「商流」を解像度高く理解するよう努めてください。",
+            "<strong>[Lv.2] エクイティストーリーの構築</strong><br>自社やクライアント企業が「どうすれば株価（企業価値）が上がるか」を投資家目線で語る訓練をしましょう。",
+            "<strong>[Lv.3] 分析レポート作成</strong><br>担当分野に関する分析レポートをA4・1枚で作成し、アウトプットする習慣をつけてください。",
+          ],
+          roadmap: [
+            "CFO（最高財務責任者）",
+            "PEファンド / ベンチャーキャピタリスト",
+            "M&Aアドバイザリー",
+          ],
+          onepoint:
+            "「守り（コンプライアンス・管理）」だけでなく、「攻め（資金調達・M&A・投資）」の経験を積める環境に身を置くことが、理想の年収アップを実現する鍵です。",
+        },
+        コンサルティングプロフェッショナル: {
+          subtitle: "〜難問を解決し、クライアントに変革をもたらす知の巨人〜",
+          marketValue:
+            "短期間で本質的な課題を特定し、解決策を提示するスキルは即戦力です。DXやサステナビリティなど正解のないテーマにおいて、あなたのスキルは特に輝きます。",
+          nextActions: [
+            "<strong>[Lv.1] ロジックツリー分解</strong><br>今抱えている課題を1つ、ロジックツリーで分解し、構造化して考える癖をつけましょう。",
+            "<strong>[Lv.2] 「実行」へのコミット</strong><br>絵に描いた餅（綺麗な資料）で終わらせず、現場が動けるレベルまで落とし込む「実行支援」のスキルを磨きましょう。",
+            "<strong>[Lv.3] アカウントマネジメント力</strong><br>課題解決だけでなく、「あなたにまた頼みたい」と思わせる営業力・関係構築力を意識してください。",
+          ],
+          roadmap: [
+            "コンサルティングファーム パートナー",
+            "大手事業会社 経営企画室長",
+            "PEファンド 投資先バリューアップ担当",
+          ],
+          onepoint:
+            "事業会社への転職を目指す場合、「評論家」と見られないよう注意が必要です。「自ら手を動かし、泥をかぶった経験」を職務経歴書にどう盛り込むかが重要です。",
+        },
+        "テクノロジー・DXリーダー": {
+          subtitle: "〜技術とビジネスを融合させ、未来を実装する建築家〜",
+          marketValue:
+            "「技術」と「ビジネス（利益）」を翻訳できる人材は極めて不足しています。経営層とエンジニアの共通言語を持つあなたは、現代企業の最重要人物です。",
+          nextActions: [
+            "<strong>[Lv.1] PL（損益）感覚の養成</strong><br>導入するツールや開発するシステムが、どれだけのコスト削減や売上増に繋がるかを、常に金額で試算する癖をつけましょう。",
+            "<strong>[Lv.2] 翻訳力の向上</strong><br>技術的な課題（技術的負債など）を、非エンジニア向けに専門用語なしで説明する文章を書いてみましょう。",
+            "<strong>[Lv.3] 組織変革（チェンジマネジメント）</strong><br>システム導入時の現場の反発をどう抑え、定着させるか。「人」のマネジメントスキルを磨いてください。",
+          ],
+          roadmap: [
+            "CTO（最高技術責任者） / CDO（最高デジタル責任者）",
+            "VPoE（Vice President of Engineering）",
+            "DX推進本部長",
+          ],
+          onepoint:
+            "ハイクラス求人では、特定の言語スキルよりも「技術選定の理由」や「エンジニア組織の採用・評価制度の構築経験」が問われます。",
+        },
+        専門性追求型エキスパート: {
+          subtitle: "〜特定の領域を極め、代替不可能な価値を提供する職人〜",
+          marketValue:
+            "「この分野なら〇〇さん」という第一人者ポジションは景気変動に強く、独立も可能です。知識の深さがそのまま他者の参入障壁（防御力）になります。",
+          nextActions: [
+            "<strong>[Lv.1] 最新情報のキャッチアップ</strong><br>自分の専門分野のキーワードで検索し、最新ニュースや論文を1つ読みましょう。",
+            "<strong>[Lv.2] 社外発信とネットワーキング</strong><br>社内だけでなく、業界団体やセミナー登壇、執筆などを通じて「個人の名前」でブランドを作ってください。",
+            "<strong>[Lv.3] 周辺領域への染み出し</strong><br>専門知識を、隣接するビジネス領域（例：法務ならビジネス開発）とどう絡めるか意識してみましょう。",
+          ],
+          roadmap: [
+            "専門役員（CLO、CISOなど）",
+            "特定領域の技術顧問 / 独立コンサルタント",
+            "研究開発部門のトップ",
+          ],
+          onepoint:
+            "専門用語を並べるのではなく、専門外の人（経営者）に対して「リスクとリターン」を平易な言葉で説明できる能力が、報酬アップの決め手になります。",
+        },
+        クライアント志向型プロフェッショナル: {
+          subtitle: "〜顧客の心を掴み、信頼を収益に変えるトップランナー〜",
+          marketValue:
+            "AIが進化しても、高度な「交渉」や「信頼構築」は人間にしかできません。無形商材や高額商材における折衝力は、どんなビジネスでも収益の柱です。",
+          nextActions: [
+            "<strong>[Lv.1] 顧客情報の収集</strong><br>重要顧客の最新プレスリリースや決算資料を読み、顧客の経営状況を把握しましょう。",
+            "<strong>[Lv.2] ソリューション提案力</strong><br>御用聞き営業から脱却し、顧客自身も気づいていない「真の課題（インサイト）」を提示するスタイルを確立しましょう。",
+            "<strong>[Lv.3] 経営視点の獲得</strong><br>クライアントの担当者だけでなく、決裁者（役員クラス）と対等にビジネスの話ができるよう、数字を読み込んでください。",
+          ],
+          roadmap: [
+            "営業本部長 / CRO（最高収益責任者）",
+            "カントリーマネージャー（外資系）",
+            "カスタマーサクセス責任者",
+          ],
+          onepoint:
+            "「売上数字」は当然ですが、「再現性のある営業プロセスの構築」や「若手の育成手法」を言語化できていると、マネジメント職としての評価が跳ね上がります。",
+        },
+        事業変革リーダー: {
+          subtitle: "〜混沌を恐れず、ゼロからイチを生み出す開拓者〜",
+          marketValue:
+            "新規事業や組織急拡大など、カオスな状況を楽しめる人材は貴重です。整っていない環境で自走し道を作る力は、イノベーション部門で最も求められます。",
+          nextActions: [
+            "<strong>[Lv.1] ゼロベース思考</strong><br>「もし今の事業が明日なくなったら何をするか」を1つ考え、メモに残しましょう。",
+            "<strong>[Lv.2] 仮説検証の高速化</strong><br>完璧な計画を立てるより、小さなプロトタイプを市場に出してフィードバックを得るサイクル（PDCA）を高速化させてください。",
+            "<strong>[Lv.3] 「撤退」の基準作り</strong><br>攻めるだけでなく、ダメな時にどこで損切りするかという、冷徹な判断軸を持つ訓練をしましょう。",
+          ],
+          roadmap: ["起業家 / CEO", "新規事業開発室長", "事業再生マネージャー"],
+          onepoint:
+            "失敗経験こそが資産です。「なぜ失敗したか」「次にどう活かすか」を深く内省し語れる人は、投資家や経営陣から深い信頼を得られます。",
+        },
+        マルチタレント型ゼネラリスト: {
+          subtitle:
+            "〜あらゆるピースを繋ぎ合わせ、組織を機能させる万能の接着剤〜",
+          marketValue:
+            "変化の激しい現代では「全体最適化のプロ」として再評価されています。部門間の壁を取り払いプロジェクトを進める力は、COOや社長室長として重要です。",
+          nextActions: [
+            "<strong>[Lv.1] コネクションの可視化</strong><br>自分が繋げられそうな「部署と部署」や「人と人」を書き出してみましょう。",
+            "<strong>[Lv.2] プロジェクトマネジメント（PM）の体系化</strong><br>自分の調整力を、PMBOKなどのフレームワークと照らし合わせ、「属人的なスキル」から「体系的な手法」へ昇華させてください。",
+            "<strong>[Lv.3] 「翻訳者」としてのポジショニング</strong><br>営業と開発、経営と現場など、言葉が通じにくい部署の間に入り、通訳として機能する実績を作りましょう。",
+          ],
+          roadmap: [
+            "COO（最高執行責任者）",
+            "Chief of Staff（経営企画・社長室長）",
+            "大規模プロジェクトマネージャー",
+          ],
+          onepoint:
+            "「何でもできます」は「何もできません」と取られるリスクがあります。「私は、複雑な利害関係を調整し、プロジェクトを完遂させるプロです」と、機能（Function）としての強みを定義してください。",
+        },
+      };
 
-        const STORAGE_KEY = 'kotora_career_v3';
-        let currentQuestion = 0;
-        let answers = {};
+      const STORAGE_KEY = "kotora_career_v3";
+      let currentQuestion = 0;
+      let answers = {};
 
-        // --- 初期化 ---
-        document.addEventListener('DOMContentLoaded', () => {
-            initStorageCheck();
-            document.body.addEventListener('touchstart', function() {}, {passive: true});
-            document.getElementById('startBtn').addEventListener('click', () => switchPage('page-start', 'page-questions'));
-            document.getElementById('restartBtn').addEventListener('click', () => switchPage('page-start', 'page-questions'));
-            document.getElementById('resumeBtn').addEventListener('click', restorePreviousResult);
-            document.getElementById('prevBtn').addEventListener('click', prevQuestion);
-            document.getElementById('nextBtn').addEventListener('click', nextQuestion);
-            document.getElementById('retryBtn').addEventListener('click', () => location.reload());
-            showQuestion(0, 'init');
+      // --- 初期化 ---
+      document.addEventListener("DOMContentLoaded", () => {
+        initStorageCheck();
+        document.body.addEventListener("touchstart", function () {}, {
+          passive: true,
         });
+        document
+          .getElementById("startBtn")
+          .addEventListener("click", () =>
+            switchPage("page-start", "page-questions"),
+          );
+        document
+          .getElementById("restartBtn")
+          .addEventListener("click", () =>
+            switchPage("page-start", "page-questions"),
+          );
+        document
+          .getElementById("resumeBtn")
+          .addEventListener("click", restorePreviousResult);
+        document
+          .getElementById("prevBtn")
+          .addEventListener("click", prevQuestion);
+        document
+          .getElementById("nextBtn")
+          .addEventListener("click", nextQuestion);
+        document
+          .getElementById("retryBtn")
+          .addEventListener("click", () => location.reload());
+        showQuestion(0, "init");
+      });
 
-        function switchPage(fromId, toId) {
-            const fromPage = document.getElementById(fromId);
-            const toPage = document.getElementById(toId);
-            window.scrollTo(0, 0);
-            toPage.classList.add('active', 'slide-in-right');
-            setTimeout(() => {
-                fromPage.classList.remove('active');
-                toPage.classList.remove('slide-in-right');
-            }, 500);
-        }
+      function switchPage(fromId, toId) {
+        const fromPage = document.getElementById(fromId);
+        const toPage = document.getElementById(toId);
+        window.scrollTo(0, 0);
+        toPage.classList.add("active", "slide-in-right");
+        setTimeout(() => {
+          fromPage.classList.remove("active");
+          toPage.classList.remove("slide-in-right");
+        }, 500);
+      }
 
-        function getStorageData() {
-            try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { latest: null, actions: {} }; }
-            catch { return { latest: null, actions: {} }; }
-        }
-        function saveStorageData(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
-
-        function initStorageCheck() {
-            const data = getStorageData();
-            if (data.latest && data.latest.type) {
-                document.getElementById('welcomeSection').style.display = 'block';
-                document.getElementById('introSection').style.display = 'none';
-                document.getElementById('lastResultType').textContent = data.latest.type;
-                const d = new Date(data.latest.date);
-                document.getElementById('lastDate').textContent = `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+      function getStorageData() {
+        try {
+          return (
+            JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
+              latest: null,
+              actions: {},
             }
+          );
+        } catch {
+          return { latest: null, actions: {} };
         }
+      }
+      function saveStorageData(data) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      }
 
-        function showQuestion(index, mode = 'next') {
-            const container = document.getElementById('questionContainer');
-            const q = questions[index];
-            const inputType = q.type === 'checkbox' ? 'checkbox' : 'radio';
-            
-            let html = `<div class="question-title" style="font-size:20px; font-weight:bold; margin-bottom:15px;">Q${index + 1}. ${q.text}</div>`;
-            if (inputType === 'checkbox') html += `<div style="font-size:12px; color:#667eea; margin-bottom:15px;">✓ 複数選択可</div>`;
-            
-            q.options.forEach((option, i) => {
-                const isChecked = checkIfSelected(q.id, i, inputType);
-                html += `
-                    <div class="option ${isChecked ? 'selected' : ''}" onclick="handleOptionClick(this, ${index}, ${i}, '${inputType}')">
-                        <input type="${inputType}" ${isChecked ? 'checked' : ''} readonly>
+      function initStorageCheck() {
+        const data = getStorageData();
+        if (data.latest && data.latest.type) {
+          document.getElementById("welcomeSection").style.display = "block";
+          document.getElementById("introSection").style.display = "none";
+          document.getElementById("lastResultType").textContent =
+            data.latest.type;
+          const d = new Date(data.latest.date);
+          document.getElementById("lastDate").textContent =
+            `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`;
+        }
+      }
+
+      function showQuestion(index, mode = "next") {
+        const container = document.getElementById("questionContainer");
+        const q = questions[index];
+        const inputType = q.type === "checkbox" ? "checkbox" : "radio";
+
+        let html = `<div class="question-title" style="font-size:20px; font-weight:bold; margin-bottom:15px;">Q${index + 1}. ${q.text}</div>`;
+        if (inputType === "checkbox")
+          html += `<div style="font-size:12px; color:#667eea; margin-bottom:15px;">✓ 複数選択可</div>`;
+
+        q.options.forEach((option, i) => {
+          const isChecked = checkIfSelected(q.id, i, inputType);
+          html += `
+                    <div class="option ${isChecked ? "selected" : ""}" onclick="handleOptionClick(this, ${index}, ${i}, '${inputType}')">
+                        <input type="${inputType}" ${isChecked ? "checked" : ""} readonly>
                         <span>${option.text}</span>
                     </div>`;
-            });
+        });
 
-            if (mode === 'init') {
-                container.innerHTML = html;
+        if (mode === "init") {
+          container.innerHTML = html;
+        } else {
+          container.classList.add("fade-out-left");
+          setTimeout(() => {
+            container.innerHTML = html;
+            container.classList.remove("fade-out-left");
+            container.classList.add("fade-in-right");
+            setTimeout(() => container.classList.remove("fade-in-right"), 400);
+          }, 300);
+        }
+
+        const progress = ((index + 1) / questions.length) * 100;
+        document.getElementById("progressFill").style.width = `${progress}%`;
+        document.getElementById("progressText").textContent =
+          `Q ${index + 1} / ${questions.length}`;
+        document.getElementById("prevBtn").disabled = index === 0;
+        document.getElementById("nextBtn").textContent =
+          index === questions.length - 1 ? "診断結果を見る" : "次へ";
+      }
+
+      function checkIfSelected(qId, optIndex, inputType) {
+        if (!answers[qId]) return false;
+        if (inputType === "checkbox") return answers[qId].includes(optIndex);
+        return answers[qId] === optIndex;
+      }
+
+      window.handleOptionClick = function (el, qIndex, optIndex, inputType) {
+        const q = questions[qIndex];
+        const checkbox = el.querySelector("input");
+        if (inputType === "checkbox") {
+          if (!answers[q.id]) answers[q.id] = [];
+          const idx = answers[q.id].indexOf(optIndex);
+          if (idx > -1) {
+            answers[q.id].splice(idx, 1);
+            checkbox.checked = false;
+            el.classList.remove("selected");
+          } else {
+            answers[q.id].push(optIndex);
+            checkbox.checked = true;
+            el.classList.add("selected");
+          }
+        } else {
+          answers[q.id] = optIndex;
+          const allOpts = el.parentElement.querySelectorAll(".option");
+          allOpts.forEach((o) => {
+            o.classList.remove("selected");
+            o.querySelector("input").checked = false;
+          });
+          checkbox.checked = true;
+          el.classList.add("selected");
+        }
+      };
+
+      function prevQuestion() {
+        if (currentQuestion > 0) {
+          currentQuestion--;
+          showQuestion(currentQuestion, "prev");
+        }
+      }
+
+      function nextQuestion() {
+        const q = questions[currentQuestion];
+        if (!validateAnswer(q)) {
+          alert("選択肢を選んでください");
+          return;
+        }
+        if (currentQuestion < questions.length - 1) {
+          currentQuestion++;
+          showQuestion(currentQuestion, "next");
+        } else {
+          calculateAndShowResult();
+        }
+      }
+
+      function validateAnswer(q) {
+        if (q.type === "checkbox")
+          return answers[q.id] && answers[q.id].length > 0;
+        return answers[q.id] !== undefined;
+      }
+
+      function calculateAndShowResult() {
+        let scores = {};
+        questions.forEach((q) => {
+          const ans = answers[q.id];
+          if (ans === undefined) return;
+          const selected = Array.isArray(ans) ? ans : [ans];
+          selected.forEach((idx) => {
+            const sc = q.options[idx].scores;
+            for (const k in sc) scores[k] = (scores[k] || 0) + sc[k];
+          });
+        });
+
+        const get = (k) => scores[k] || 0;
+        let type = "マルチタレント型ゼネラリスト";
+        if (get("leadership") + get("strategy") + get("management") >= 13)
+          type = "戦略思考型リーダー";
+        else if (get("finance") + get("analytical") >= 7)
+          type = "金融スペシャリスト";
+        else if (get("consulting") + get("strategy") >= 8)
+          type = "コンサルティングプロフェッショナル";
+        else if (get("it") + get("innovation") >= 7)
+          type = "テクノロジー・DXリーダー";
+        else if (get("specialist") >= 8) type = "専門性追求型エキスパート";
+        else if (get("communication") + get("negotiation") >= 8)
+          type = "クライアント志向型プロフェッショナル";
+        else if (
+          get("leadership") + get("versatility") >= 9 ||
+          get("entrepreneurship") >= 5
+        )
+          type = "事業変革リーダー";
+
+        const data = getStorageData();
+        data.latest = { type: type, date: new Date().getTime() };
+        saveStorageData(data);
+
+        document.getElementById("resultType").textContent = type;
+        document.getElementById("resultDescription").textContent =
+          TYPE_INFO[type];
+        displayDetailReport(type);
+
+        switchPage("page-questions", "page-results");
+        triggerResultAnimations();
+      }
+
+      function restorePreviousResult() {
+        const data = getStorageData();
+        if (data.latest && data.latest.type) {
+          const type = data.latest.type;
+          document.getElementById("resultType").textContent = type;
+          document.getElementById("resultDescription").textContent =
+            TYPE_INFO[type];
+          displayDetailReport(type);
+          switchPage("page-start", "page-results");
+          triggerResultAnimations();
+        }
+      }
+
+      function triggerResultAnimations() {
+        const items = document.querySelectorAll(".stagger-item");
+        items.forEach((item) => {
+          item.classList.remove("stagger-visible");
+          void item.offsetWidth;
+          item.classList.add("stagger-visible");
+        });
+      }
+
+      function displayDetailReport(type) {
+        const data = detailReports[type];
+        if (!data) return;
+
+        document.getElementById("detailReport").style.display = "block";
+        document.getElementById("detailSubtitle").textContent = data.subtitle;
+        document.getElementById("marketValue").textContent = data.marketValue;
+
+        const list = document.getElementById("nextActions");
+        list.innerHTML = "";
+        const stored = getStorageData();
+        const checks = stored.actions[type] || [];
+
+        data.nextActions.forEach((txt, i) => {
+          const div = document.createElement("div");
+          const isDone = !!checks[i];
+          div.className = `todo-item ${isDone ? "completed" : ""}`;
+          div.innerHTML = `<input type="checkbox" class="todo-checkbox" ${isDone ? "checked" : ""}><span>${txt}</span>`;
+
+          div.addEventListener("click", function (e) {
+            if (e.target.tagName !== "INPUT") {
+              const cb = this.querySelector("input");
+              cb.checked = !cb.checked;
+            }
+            const cb = this.querySelector("input");
+
+            if (cb.checked) this.classList.add("completed");
+            else this.classList.remove("completed");
+
+            saveActionState(type, i, cb.checked);
+
+            if (cb.checked) {
+              checkCompletion(type, data.nextActions.length);
             } else {
-                container.classList.add('fade-out-left');
-                setTimeout(() => {
-                    container.innerHTML = html;
-                    container.classList.remove('fade-out-left');
-                    container.classList.add('fade-in-right');
-                    setTimeout(() => container.classList.remove('fade-in-right'), 400);
-                }, 300);
+              updateProgress(type, data.nextActions.length);
             }
+          });
+          list.appendChild(div);
+        });
+        updateProgress(type, data.nextActions.length);
 
-            const progress = ((index + 1) / questions.length) * 100;
-            document.getElementById('progressFill').style.width = `${progress}%`;
-            document.getElementById('progressText').textContent = `Q ${index + 1} / ${questions.length}`;
-            document.getElementById('prevBtn').disabled = index === 0;
-            document.getElementById('nextBtn').textContent = index === questions.length - 1 ? '診断結果を見る' : '次へ';
+        const roadmapUl = document.getElementById("roadmap");
+        roadmapUl.innerHTML = "";
+        data.roadmap.forEach((item) => {
+          const li = document.createElement("li");
+          li.textContent = item;
+          roadmapUl.appendChild(li);
+        });
+
+        document.getElementById("onepoint").textContent = data.onepoint;
+      }
+
+      function saveActionState(type, idx, val) {
+        const d = getStorageData();
+        if (!d.actions[type]) d.actions[type] = [];
+        d.actions[type][idx] = val;
+        saveStorageData(d);
+      }
+
+      function updateProgress(type, total) {
+        const d = getStorageData();
+        const c = d.actions[type] || [];
+        const count = c.filter(Boolean).length;
+        const pct = Math.round((count / total) * 100);
+        document.getElementById("actionPercent").textContent = `${pct}%`;
+        document.getElementById("actionBar").style.width = `${pct}%`;
+      }
+
+      function checkCompletion(type, total) {
+        const d = getStorageData();
+        const c = d.actions[type] || [];
+        const count = c.filter(Boolean).length;
+        const pct = Math.round((count / total) * 100);
+
+        document.getElementById("actionPercent").textContent = `${pct}%`;
+        document.getElementById("actionBar").style.width = `${pct}%`;
+
+        if (pct === 100) {
+          celebrate();
         }
+      }
 
-        function checkIfSelected(qId, optIndex, inputType) {
-            if (!answers[qId]) return false;
-            if (inputType === 'checkbox') return answers[qId].includes(optIndex);
-            return answers[qId] === optIndex;
-        }
+      function celebrate() {
+        if (typeof confetti === "function") {
+          const duration = 2000;
+          const end = Date.now() + duration;
 
-        window.handleOptionClick = function(el, qIndex, optIndex, inputType) {
-            const q = questions[qIndex];
-            const checkbox = el.querySelector('input');
-            if (inputType === 'checkbox') {
-                if (!answers[q.id]) answers[q.id] = [];
-                const idx = answers[q.id].indexOf(optIndex);
-                if (idx > -1) {
-                    answers[q.id].splice(idx, 1);
-                    checkbox.checked = false;
-                    el.classList.remove('selected');
-                } else {
-                    answers[q.id].push(optIndex);
-                    checkbox.checked = true;
-                    el.classList.add('selected');
-                }
-            } else {
-                answers[q.id] = optIndex;
-                const allOpts = el.parentElement.querySelectorAll('.option');
-                allOpts.forEach(o => {
-                    o.classList.remove('selected');
-                    o.querySelector('input').checked = false;
-                });
-                checkbox.checked = true;
-                el.classList.add('selected');
-            }
-        };
-
-        function prevQuestion() {
-            if (currentQuestion > 0) {
-                currentQuestion--;
-                showQuestion(currentQuestion, 'prev');
-            }
-        }
-
-        function nextQuestion() {
-            const q = questions[currentQuestion];
-            if (!validateAnswer(q)) {
-                alert('選択肢を選んでください');
-                return;
-            }
-            if (currentQuestion < questions.length - 1) {
-                currentQuestion++;
-                showQuestion(currentQuestion, 'next');
-            } else {
-                calculateAndShowResult();
-            }
-        }
-
-        function validateAnswer(q) {
-            if (q.type === 'checkbox') return answers[q.id] && answers[q.id].length > 0;
-            return answers[q.id] !== undefined;
-        }
-
-        function calculateAndShowResult() {
-            let scores = {};
-            questions.forEach(q => {
-                const ans = answers[q.id];
-                if (ans === undefined) return;
-                const selected = Array.isArray(ans) ? ans : [ans];
-                selected.forEach(idx => {
-                    const sc = q.options[idx].scores;
-                    for (const k in sc) scores[k] = (scores[k] || 0) + sc[k];
-                });
+          (function frame() {
+            confetti({
+              particleCount: 5,
+              angle: 60,
+              spread: 55,
+              origin: { x: 0 },
+              colors: ["#667eea", "#764ba2", "#ffeb3b"],
+            });
+            confetti({
+              particleCount: 5,
+              angle: 120,
+              spread: 55,
+              origin: { x: 1 },
+              colors: ["#667eea", "#764ba2", "#ffeb3b"],
             });
 
-            const get = k => scores[k] || 0;
-            let type = "マルチタレント型ゼネラリスト";
-            if (get('leadership') + get('strategy') + get('management') >= 13) type = "戦略思考型リーダー";
-            else if (get('finance') + get('analytical') >= 7) type = "金融スペシャリスト";
-            else if (get('consulting') + get('strategy') >= 8) type = "コンサルティングプロフェッショナル";
-            else if (get('it') + get('innovation') >= 7) type = "テクノロジー・DXリーダー";
-            else if (get('specialist') >= 8) type = "専門性追求型エキスパート";
-            else if (get('communication') + get('negotiation') >= 8) type = "クライアント志向型プロフェッショナル";
-            else if ((get('leadership') + get('versatility') >= 9) || (get('entrepreneurship') >= 5)) type = "事業変革リーダー";
-
-            const data = getStorageData();
-            data.latest = { type: type, date: new Date().getTime() };
-            saveStorageData(data);
-
-            document.getElementById('resultType').textContent = type;
-            document.getElementById('resultDescription').textContent = TYPE_INFO[type];
-            displayDetailReport(type);
-            
-            switchPage('page-questions', 'page-results');
-            triggerResultAnimations();
-        }
-
-        function restorePreviousResult() {
-            const data = getStorageData();
-            if (data.latest && data.latest.type) {
-                const type = data.latest.type;
-                document.getElementById('resultType').textContent = type;
-                document.getElementById('resultDescription').textContent = TYPE_INFO[type];
-                displayDetailReport(type);
-                switchPage('page-start', 'page-results');
-                triggerResultAnimations();
+            if (Date.now() < end) {
+              requestAnimationFrame(frame);
             }
+          })();
         }
+        playCelebrationSound();
+      }
 
-        function triggerResultAnimations() {
-            const items = document.querySelectorAll('.stagger-item');
-            items.forEach(item => {
-                item.classList.remove('stagger-visible');
-                void item.offsetWidth;
-                item.classList.add('stagger-visible');
-            });
-        }
+      function playCelebrationSound() {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        const notes = [523.25, 659.25, 783.99, 1046.5];
 
-        function displayDetailReport(type) {
-            const data = detailReports[type];
-            if (!data) return;
+        notes.forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "triangle";
+          osc.frequency.value = freq;
+          osc.connect(gain);
+          gain.connect(ctx.destination);
 
-            document.getElementById('detailReport').style.display = 'block';
-            document.getElementById('detailSubtitle').textContent = data.subtitle;
-            document.getElementById('marketValue').textContent = data.marketValue;
+          const startTime = ctx.currentTime + i * 0.05;
+          gain.gain.setValueAtTime(0, startTime);
+          gain.gain.linearRampToValueAtTime(0.1, startTime + 0.01);
+          gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
 
-            const list = document.getElementById('nextActions');
-            list.innerHTML = '';
-            const stored = getStorageData();
-            const checks = stored.actions[type] || [];
-
-            data.nextActions.forEach((txt, i) => {
-                const div = document.createElement('div');
-                const isDone = !!checks[i];
-                div.className = `todo-item ${isDone ? 'completed' : ''}`;
-                div.innerHTML = `<input type="checkbox" class="todo-checkbox" ${isDone ? 'checked' : ''}><span>${txt}</span>`;
-                
-                div.addEventListener('click', function(e) {
-                    if (e.target.tagName !== 'INPUT') {
-                        const cb = this.querySelector('input');
-                        cb.checked = !cb.checked;
-                    }
-                    const cb = this.querySelector('input');
-                    
-                    if(cb.checked) this.classList.add('completed');
-                    else this.classList.remove('completed');
-                    
-                    saveActionState(type, i, cb.checked);
-                    
-                    if (cb.checked) {
-                        checkCompletion(type, data.nextActions.length);
-                    } else {
-                        updateProgress(type, data.nextActions.length);
-                    }
-                });
-                list.appendChild(div);
-            });
-            updateProgress(type, data.nextActions.length);
-
-            const roadmapUl = document.getElementById('roadmap');
-            roadmapUl.innerHTML = '';
-            data.roadmap.forEach(item => {
-                const li = document.createElement('li');
-                li.textContent = item;
-                roadmapUl.appendChild(li);
-            });
-
-            document.getElementById('onepoint').textContent = data.onepoint;
-        }
-
-        function saveActionState(type, idx, val) {
-            const d = getStorageData();
-            if (!d.actions[type]) d.actions[type] = [];
-            d.actions[type][idx] = val;
-            saveStorageData(d);
-        }
-
-        function updateProgress(type, total) {
-            const d = getStorageData();
-            const c = d.actions[type] || [];
-            const count = c.filter(Boolean).length;
-            const pct = Math.round((count / total) * 100);
-            document.getElementById('actionPercent').textContent = `${pct}%`;
-            document.getElementById('actionBar').style.width = `${pct}%`;
-        }
-
-        function checkCompletion(type, total) {
-            const d = getStorageData();
-            const c = d.actions[type] || [];
-            const count = c.filter(Boolean).length;
-            const pct = Math.round((count / total) * 100);
-
-            document.getElementById('actionPercent').textContent = `${pct}%`;
-            document.getElementById('actionBar').style.width = `${pct}%`;
-
-            if (pct === 100) {
-                celebrate();
-            }
-        }
-
-        function celebrate() {
-            if (typeof confetti === 'function') {
-                const duration = 2000;
-                const end = Date.now() + duration;
-
-                (function frame() {
-                    confetti({
-                        particleCount: 5, angle: 60, spread: 55, origin: { x: 0 },
-                        colors: ['#667eea', '#764ba2', '#ffeb3b']
-                    });
-                    confetti({
-                        particleCount: 5, angle: 120, spread: 55, origin: { x: 1 },
-                        colors: ['#667eea', '#764ba2', '#ffeb3b']
-                    });
-
-                    if (Date.now() < end) {
-                        requestAnimationFrame(frame);
-                    }
-                }());
-            }
-            playCelebrationSound();
-        }
-
-        function playCelebrationSound() {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            if (!AudioContext) return;
-            const ctx = new AudioContext();
-            const notes = [523.25, 659.25, 783.99, 1046.50];
-            
-            notes.forEach((freq, i) => {
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'triangle';
-                osc.frequency.value = freq;
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                
-                const startTime = ctx.currentTime + (i * 0.05);
-                gain.gain.setValueAtTime(0, startTime);
-                gain.gain.linearRampToValueAtTime(0.1, startTime + 0.01);
-                gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
-                
-                osc.start(startTime);
-                osc.stop(startTime + 0.4);
-            });
-        }
+          osc.start(startTime);
+          osc.stop(startTime + 0.4);
+        });
+      }
     </script>
-</body>
+  </body>
 </html>
